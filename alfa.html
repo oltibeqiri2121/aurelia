@@ -1,0 +1,2529 @@
+Copy// package.json
+{
+  "name": "aurelia-hotel-resort",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": { "dev": "vite", "build": "vite build", "preview": "vite preview" },
+  "dependencies": {
+    "framer-motion": "^11.11.0",
+    "lucide-react": "^0.454.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.27.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "vite": "^5.4.10"
+  }
+}
+Copy// vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+export default defineConfig({ plugins: [react()] });
+Copy// postcss.config.js
+export default { plugins: { tailwindcss: {}, autoprefixer: {} } };
+Copy// tailwind.config.js
+export default {
+  content: ['./index.html', './src/**/*.{js,jsx}'],
+  theme: {
+    extend: {
+      colors: {
+        ivory: '#FAF7F2',
+        beige: '#EFE7DA',
+        sand: '#DCCFB9',
+        gold: { DEFAULT: '#C6A664', dark: '#A5883F', light: '#E6D5AC' },
+        charcoal: '#2B2A28',
+        espresso: '#3A2A20',
+      },
+      fontFamily: {
+        serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        sans: ['Jost', 'system-ui', 'sans-serif'],
+      },
+      letterSpacing: { luxe: '0.22em' },
+    },
+  },
+  plugins: [],
+};
+Copy<!-- index.html -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#3A2A20" />
+    <title>Aurelia Hotel & Resort — A Stay Beyond Expectations</title>
+    <meta name="description" content="Aurelia Hotel & Resort is a demonstration luxury hotel website: refined rooms and suites, fine dining, spa and unforgettable experiences." />
+    <meta property="og:title" content="Aurelia Hotel & Resort" />
+    <meta property="og:description" content="A Stay Beyond Expectations. Demo luxury hotel website." />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+Copy<!-- public/favicon.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#3A2A20"/><text x="32" y="43" font-family="Georgia,serif" font-size="34" text-anchor="middle" fill="#C6A664">A</text></svg>
+Source files:
+
+Copy/* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { @apply bg-ivory font-sans text-charcoal antialiased; }
+  h1, h2, h3, h4 { @apply font-serif font-medium tracking-tight; }
+  :focus-visible { outline: 2px solid #C6A664; outline-offset: 3px; }
+  ::selection { background: #E6D5AC; }
+}
+
+@layer components {
+  .container-x { @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12; }
+  .eyebrow { @apply text-[11px] font-medium uppercase tracking-luxe text-gold-dark; }
+  .input {
+    @apply w-full border border-sand bg-white px-4 py-3 text-sm text-charcoal transition placeholder:text-charcoal/40 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold;
+  }
+  .input-error { @apply border-red-700/70; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+Copy// src/main.jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import App from './App.jsx';
+
+createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+Copy// src/App.jsx
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { MotionConfig, motion } from 'framer-motion';
+import { ToastProvider } from './context/ToastContext';
+import { BookingProvider } from './context/BookingContext';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import BookingModal from './components/BookingModal';
+import ScrollToTop from './components/ScrollToTop';
+import { Spinner } from './components/ui';
+
+const Home = lazy(() => import('./pages/Home'));
+const Rooms = lazy(() => import('./pages/Rooms'));
+const RoomDetails = lazy(() => import('./pages/RoomDetails'));
+const Dining = lazy(() => import('./pages/Dining'));
+const Experiences = lazy(() => import('./pages/Experiences'));
+const GalleryPage = lazy(() => import('./pages/GalleryPage'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Book = lazy(() => import('./pages/Book'));
+const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'));
+const Legal = lazy(() => import('./pages/Legal'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
+function Layout() {
+  const { pathname } = useLocation();
+  return (
+    <>
+      <a href="#main" className="sr-only z-[200] bg-gold px-4 py-2 text-charcoal focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+        Skip to content
+      </a>
+      <Navbar />
+      <motion.main id="main" key={pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+        <Suspense fallback={<div className="grid min-h-[60vh] place-items-center"><Spinner /></div>}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/rooms" element={<Rooms />} />
+            <Route path="/rooms/:slug" element={<RoomDetails />} />
+            <Route path="/dining" element={<Dining />} />
+            <Route path="/experiences" element={<Experiences />} />
+            <Route path="/gallery" element={<GalleryPage />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/book" element={<Book />} />
+            <Route path="/booking" element={<BookingConfirmation />} />
+            <Route path="/booking/:ref" element={<BookingConfirmation />} />
+            <Route path="/privacy" element={<Legal type="privacy" />} />
+            <Route path="/terms" element={<Legal type="terms" />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </motion.main>
+      <Footer />
+      <BookingModal />
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <MotionConfig reducedMotion="user">
+      <ToastProvider>
+        <BrowserRouter>
+          <BookingProvider>
+            <ScrollToTop />
+            <Layout />
+          </BookingProvider>
+        </BrowserRouter>
+      </ToastProvider>
+    </MotionConfig>
+  );
+}
+Copy
+Copy// src/config.js — edit these to configure the site
+export const SITE = {
+  name: 'Aurelia Hotel & Resort',
+  email: 'reservations@aurelia.example',
+  phone: '+00 (0) 000 000 000',
+  address: ['00 Placeholder Avenue', 'Your City, Country 00000'],
+  checkIn: '3:00 PM',
+  checkOut: '11:00 AM',
+  currency: 'USD',
+  // Paste a Google Maps / OpenStreetMap embed URL here to replace the placeholder map.
+  mapEmbedUrl: '',
+  // Add real profile URLs to turn the demo social buttons into real links.
+  social: { instagram: '', facebook: '', twitter: '', youtube: '' },
+};
+Data:
+
+Copy// src/data/images.js
+// Unsplash photo IDs (free to use under the Unsplash licence). Swap any ID to change a photo.
+export const IMG = {
+  hero: '1566073771259-6a8506099945',
+  exterior1: '1542314831-068cd1dbfeeb',
+  exterior2: '1551882547-ff40c63fe5fa',
+  pool: '1520250497591-112f2f40a3f4',
+  pool2: '1445019980597-93fa8acb246c',
+  lobby: '1590381105924-c72589b9ef3f',
+  lobby2: '1560200353-ce0a76b1d438',
+  deluxe1: '1631049307264-da0ec9d70304',
+  deluxe2: '1618773928121-c32242e63f39',
+  deluxe3: '1584132967334-10e028bd69f7',
+  suite1: '1582719478250-c89cae4dc85b',
+  suite2: '1578683010236-d716f9a3f461',
+  suite3: '1590490360182-c33d57733427',
+  pres1: '1566665797739-1674de7a421a',
+  pres2: '1596394516093-501ba68a0ba6',
+  family1: '1522708323590-d24dbb6b0267',
+  family2: '1595576508898-0ad5c879a061',
+  restaurant: '1414235077428-338989a2e8c0',
+  restaurant2: '1517248135467-4c7edcad34c4',
+  steak: '1600891964092-4316c288032e',
+  dessert: '1551024601-bec78aea704b',
+  breakfast: '1533777857889-4be7c70b33f7',
+  wine: '1510812431401-41d2bd2722f3',
+  spa: '1540555700478-4be289fbecef',
+  spa2: '1544161515-4ab6ce6db874',
+  gym: '1534438327276-14e5300c3a48',
+  rooftop: '1470337458703-46ad1756a187',
+  transfer: '1449965408869-eaa3f722e40d',
+  paris: '1502602898657-3e91760cbb34',
+  coast: '1507525428034-b723cf961d3e',
+  city: '1499856871958-5b9627545d1a',
+  romantic: '1519167758481-83f550bb49b3',
+  celebration: '1530103862676-de8c9debad1d',
+  familyHoliday: '1511895426328-dc8714191300',
+};
+
+export const imgUrl = (id, w = 1200) =>
+  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=75`;
+Copy
+Copy// src/data/rooms.js
+import { IMG } from './images';
+
+export const rooms = [
+  {
+    id: 'deluxe-garden-room',
+    name: 'Deluxe Garden Room',
+    category: 'Rooms',
+    tagline: 'Quiet elegance overlooking the gardens',
+    description: 'An elegant interior with a king-size bed, private marble bathroom and calming garden views.',
+    details:
+      'Warm neutral tones, hand-finished timber and soft linen set the mood in this serene retreat. Floor-to-ceiling windows frame the gardens, while a deep soaking tub and rainfall shower make the bathroom a destination of its own. This is a fictional room created for demonstration purposes.',
+    maxGuests: 2, size: 38, bed: 'King-size bed', view: 'Garden view', price: 280, inventory: 8, order: 1,
+    amenities: ['King-size bed', 'Private marble bathroom', 'Garden view', 'Rainfall shower', 'Complimentary Wi-Fi', 'Smart TV', 'Espresso machine', 'In-room safe', 'Air conditioning', 'Premium bath amenities'],
+    images: [IMG.deluxe1, IMG.deluxe2, IMG.deluxe3],
+  },
+  {
+    id: 'deluxe-city-room',
+    name: 'Deluxe City Room',
+    category: 'Rooms',
+    tagline: 'Skyline views and refined comfort',
+    description: 'A sophisticated room with a king-size bed, private bathroom and sweeping city views from a high floor.',
+    details:
+      'Set on a higher floor, this room pairs a calm palette with a panoramic city outlook. A writing desk, curated minibar and generous bathroom make it equally suited to business and leisure. This is a fictional room created for demonstration purposes.',
+    maxGuests: 2, size: 40, bed: 'King-size bed', view: 'City view', price: 310, inventory: 6, order: 2,
+    amenities: ['King-size bed', 'Private bathroom with bathtub', 'City view', 'Writing desk', 'Complimentary Wi-Fi', 'Smart TV', 'Curated minibar', 'In-room safe', 'Air conditioning', 'Turn-down service'],
+    images: [IMG.deluxe2, IMG.deluxe1, IMG.deluxe3],
+  },
+  {
+    id: 'executive-suite',
+    name: 'Executive Suite',
+    category: 'Suites',
+    tagline: 'Space to unwind, room to entertain',
+    description: 'A spacious living area, premium furnishings, a king-size bed and enhanced amenities for longer stays.',
+    details:
+      'A separate living room with a plush sofa and dining nook sits beside the bedroom, finished in rich textures and soft lighting. Enjoy lounge access, a Nespresso bar and priority service as part of the demonstration package. This is a fictional suite created for demonstration purposes.',
+    maxGuests: 3, size: 62, bed: 'King-size bed', view: 'City or pool view', price: 480, inventory: 4, order: 3,
+    amenities: ['King-size bed', 'Separate living area', 'Premium furnishings', 'Marble bathroom with bathtub', 'Lounge access', 'Nespresso bar', 'Complimentary Wi-Fi', 'Dining nook', 'Bathrobes & slippers', 'Priority room service'],
+    images: [IMG.suite1, IMG.suite2, IMG.suite3],
+  },
+  {
+    id: 'presidential-suite',
+    name: 'Presidential Suite',
+    category: 'Suites',
+    tagline: 'Our most exclusive address',
+    description: 'Expansive living space, a luxury bathroom, a private lounge and premium accommodation throughout.',
+    details:
+      'The crown of the hotel: a sweeping suite with a private lounge, formal dining table, walk-in dressing room and a spa-inspired bathroom with a freestanding tub. A dedicated butler and private airport transfer complete the experience in this demonstration. This is a fictional suite.',
+    maxGuests: 4, size: 140, bed: 'King-size bed + sofa bed', view: 'Panoramic view', price: 1250, inventory: 2, order: 4,
+    amenities: ['King-size bed', 'Private lounge', 'Luxury bathroom with freestanding tub', 'Walk-in dressing room', 'Formal dining area', 'Dedicated butler', 'Private airport transfer', 'Complimentary Wi-Fi', 'Premium minibar', 'Daily floral arrangement'],
+    images: [IMG.pres1, IMG.pres2, IMG.suite2],
+  },
+  {
+    id: 'family-room',
+    name: 'Family Room',
+    category: 'Family',
+    tagline: 'Comfort for the whole family',
+    description: 'A comfortable family layout with extra sleeping space and family-friendly amenities.',
+    details:
+      'Two sleeping zones keep everyone comfortable: a king-size bed for parents and twin beds or a sofa bed for children. Child-friendly touches, extra storage and a connecting-room option make family holidays easy. This is a fictional room created for demonstration purposes.',
+    maxGuests: 4, size: 55, bed: 'King bed + two single beds', view: 'Garden or pool view', price: 360, inventory: 5, order: 5,
+    amenities: ['King-size bed', 'Two single beds / sofa bed', 'Family-friendly amenities', 'Child-safe minibar', 'Kids’ bathrobes', 'Complimentary Wi-Fi', 'Smart TV with kids’ channels', 'Extra storage', 'Connecting-room option', 'Baby cot on request'],
+    images: [IMG.family1, IMG.family2, IMG.deluxe1],
+  },
+];
+
+export const getRoom = (id) => rooms.find((r) => r.id === id);
+export const roomCategories = ['All', 'Rooms', 'Suites', 'Family'];
+Copy
+Copy// src/data/amenities.js
+import { Waves, Flower2, Dumbbell, UtensilsCrossed, Wine, Wifi, ConciergeBell, Plane } from 'lucide-react';
+import { IMG } from './images';
+
+export const amenities = [
+  { id: 'pool', icon: Waves, title: 'Infinity Swimming Pool', text: 'Glide toward the horizon in a heated infinity pool, with attentive poolside service.', image: IMG.pool },
+  { id: 'spa', icon: Flower2, title: 'Spa & Wellness Centre', text: 'Restorative treatments, thermal suites and quiet relaxation spaces.', image: IMG.spa },
+  { id: 'fitness', icon: Dumbbell, title: 'Fitness Centre', text: 'Modern equipment and natural light for training at your own pace.', image: IMG.gym },
+  { id: 'dining', icon: UtensilsCrossed, title: 'Fine Dining Restaurant', text: 'Seasonal tasting menus and a thoughtful wine list in an elegant dining room.', image: IMG.restaurant },
+  { id: 'rooftop', icon: Wine, title: 'Rooftop Lounge', text: 'Signature cocktails and golden-hour views above the skyline.', image: IMG.rooftop },
+  { id: 'wifi', icon: Wifi, title: 'Complimentary Wi-Fi', text: 'Fast, reliable connectivity throughout rooms and public spaces.', image: IMG.lobby },
+  { id: 'service', icon: ConciergeBell, title: 'Room Service', text: 'Curated in-room dining, delivered with discretion and care.', image: IMG.breakfast },
+  { id: 'transfer', icon: Plane, title: 'Airport Transfer', text: 'Arrive in comfort with a chauffeured transfer, arranged in advance.', image: IMG.transfer },
+];
+Copy// src/data/offers.js
+import { IMG } from './images';
+
+export const offers = [
+  { id: 'weekend', title: 'Weekend Escape', image: IMG.exterior1, price: 'Sample: 15% off the example rate', text: 'Two nights of calm with late check-out and a welcome drink on arrival.', includes: ['Two-night stay (Fri–Sun)', 'Welcome drink', 'Late check-out until 2:00 PM'] },
+  { id: 'romantic', title: 'Romantic Stay', image: IMG.romantic, price: 'Sample: from $420 / night', text: 'Champagne on arrival, a candlelit dinner for two and a couples’ spa moment.', includes: ['Sparkling wine on arrival', 'Dinner for two', 'Couples’ spa session', 'Rose-petal turn-down'] },
+  { id: 'extended', title: 'Extended Stay', image: IMG.suite1, price: 'Sample: stay 5, pay 4', text: 'Linger longer and enjoy a complimentary night plus daily breakfast.', includes: ['Fifth night complimentary', 'Daily breakfast', 'One laundry service'] },
+  { id: 'family', title: 'Family Holiday', image: IMG.familyHoliday, price: 'Sample: children stay free', text: 'Children under 12 stay free, with a kids’ welcome pack and family breakfast.', includes: ['Up to two children stay free', 'Kids’ welcome pack', 'Family breakfast'] },
+];
+Copy// src/data/reviews.js
+export const reviews = [
+  { id: 1, name: 'Camille D.', rating: 5, stay: 'Romantic getaway', text: 'Every detail felt considered, from the lighting in our room to the way staff remembered our names. We never wanted to leave the pool terrace.' },
+  { id: 2, name: 'James & Priya R.', rating: 5, stay: 'Anniversary stay', text: 'The suite was beautifully calm, the breakfast was memorable, and the service was warm without ever being intrusive.' },
+  { id: 3, name: 'Omar K.', rating: 4, stay: 'Business trip', text: 'Quick Wi-Fi, a superb desk and a restaurant I looked forward to every evening. Spa time on the last day was the perfect finish.' },
+  { id: 4, name: 'Elena M.', rating: 5, stay: 'Family holiday', text: 'Our children adored the pool and the staff made them feel like VIPs. The family room had plenty of space for all four of us.' },
+  { id: 5, name: 'Thomas L.', rating: 5, stay: 'Weekend escape', text: 'A true escape. Quiet rooms, thoughtful touches and a rooftop lounge that made our evenings unforgettable.' },
+];
+Copy// src/data/experiences.js
+import { Heart, Flower2, UtensilsCrossed, Landmark, PartyPopper, Users } from 'lucide-react';
+import { IMG } from './images';
+
+export const experiences = [
+  { id: 'romantic', icon: Heart, title: 'Romantic Getaway', image: IMG.romantic, short: 'Candlelit dinners, champagne and quiet moments for two.', long: 'Begin with sparkling wine in your suite, followed by a candlelit dinner on the terrace and a couples’ massage the next morning. Every detail is shaped around the two of you.', includes: ['Sparkling wine on arrival', 'Private candlelit dinner', 'Couples’ spa session', 'Late check-out'], from: 'Sample from $390 per couple' },
+  { id: 'spa', icon: Flower2, title: 'Spa Relaxation', image: IMG.spa, short: 'Restorative rituals, thermal suites and total stillness.', long: 'Surrender to a full day of wellness: aromatic steam, a signature massage and unhurried time in the relaxation lounge with herbal teas and fresh fruit.', includes: ['60-minute signature massage', 'Thermal suite access', 'Herbal tea ritual', 'Wellness lunch'], from: 'Sample from $180 per person' },
+  { id: 'dining', icon: UtensilsCrossed, title: 'Fine Dining', image: IMG.restaurant2, short: 'A seasonal tasting menu paired with thoughtful wines.', long: 'Our chef’s seasonal tasting menu unfolds over several courses, paired with wines chosen by our sommelier. Request a chef’s table for a more intimate evening.', includes: ['Five-course tasting menu', 'Wine pairing', 'Chef’s table option', 'Amuse-bouche & petit fours'], from: 'Sample from $140 per person' },
+  { id: 'city', icon: Landmark, title: 'City Exploration', image: IMG.paris, short: 'Curated walks, culture and hidden local favourites.', long: 'Let our concierge design a private itinerary of landmarks, galleries and neighbourhood cafés, with transport and a local guide arranged for the day.', includes: ['Private guided tour', 'Chauffeured transport', 'Reservations at local favourites', 'Concierge itinerary'], from: 'Sample from $220 per group' },
+  { id: 'celebrations', icon: PartyPopper, title: 'Private Celebrations', image: IMG.celebration, short: 'Intimate gatherings, milestones and celebrations.', long: 'From birthdays to anniversaries, our events team shapes private dinners and receptions with bespoke menus, floral styling and discreet service.', includes: ['Private dining space', 'Bespoke menu', 'Floral styling', 'Dedicated event host'], from: 'Sample from $1,200 per event' },
+  { id: 'family', icon: Users, title: 'Family Holidays', image: IMG.familyHoliday, short: 'Playful days by the pool and relaxed evenings together.', long: 'Pool games, a kids’ menu, family movie evenings and spacious rooms make holidays effortless for all ages.', includes: ['Family room with extra beds', 'Kids’ activity programme', 'Family breakfast', 'Poolside cabana time'], from: 'Sample from $260 per family' },
+];
+Copy// src/data/dining.js
+import { IMG } from './images';
+
+export const diningImage = IMG.restaurant;
+export const diningImage2 = IMG.restaurant2;
+
+export const diningHours = [
+  { label: 'Breakfast', time: '07:00 – 10:30' },
+  { label: 'Lunch', time: '12:00 – 15:00' },
+  { label: 'Dinner', time: '18:30 – 22:30' },
+  { label: 'Rooftop Lounge', time: '17:00 – 00:00' },
+];
+
+export const menu = {
+  Breakfast: [
+    { name: 'Aurelia Continental', desc: 'Viennoiserie, seasonal fruit, yoghurt and honeycomb.', price: 22 },
+    { name: 'Truffle Scrambled Eggs', desc: 'Soft eggs, brioche, shaved black truffle.', price: 28 },
+    { name: 'Smoked Salmon Benedict', desc: 'Poached eggs, hollandaise, rye toast.', price: 26 },
+    { name: 'Granola & Berries', desc: 'House granola, labneh, macerated berries.', price: 16 },
+  ],
+  'Main Courses': [
+    { name: 'Seared Sea Bass', desc: 'Saffron fennel, citrus beurre blanc.', price: 46 },
+    { name: 'Herb-Crusted Lamb Rack', desc: 'Roasted garlic jus, seasonal vegetables.', price: 58 },
+    { name: 'Wild Mushroom Risotto', desc: 'Aged parmesan, truffle oil.', price: 34 },
+    { name: 'Dry-Aged Ribeye', desc: 'Pommes purée, peppercorn sauce.', price: 64 },
+  ],
+  Desserts: [
+    { name: 'Dark Chocolate Fondant', desc: 'Salted caramel, vanilla ice cream.', price: 18 },
+    { name: 'Lemon & Olive Oil Cake', desc: 'Whipped mascarpone, candied zest.', price: 15 },
+    { name: 'Crème Brûlée', desc: 'Madagascan vanilla, shortbread.', price: 14 },
+    { name: 'Seasonal Sorbets', desc: 'Three scoops, fresh garnish.', price: 12 },
+  ],
+  Beverages: [
+    { name: 'Aurelia Signature Spritz', desc: 'Champagne, elderflower, citrus.', price: 20 },
+    { name: 'Single-Origin Coffee', desc: 'Espresso, americano or flat white.', price: 7 },
+    { name: 'Fresh-Pressed Juices', desc: 'Orange, green or seasonal blend.', price: 9 },
+    { name: 'Sommelier’s Glass Pour', desc: 'Ask for today’s selection.', price: 18 },
+  ],
+};
+Copy
+Copy// src/data/gallery.js
+import { IMG } from './images';
+
+export const galleryCategories = ['All', 'Exterior', 'Rooms', 'Suites', 'Pool', 'Restaurant', 'Spa', 'Lobby', 'Destination'];
+
+// Ordered so the first few items show variety on the home page.
+export const galleryItems = [
+  { id: IMG.exterior1, cat: 'Exterior', alt: 'Hotel exterior at golden hour' },
+  { id: IMG.pool, cat: 'Pool', alt: 'Resort swimming pool' },
+  { id: IMG.deluxe1, cat: 'Rooms', alt: 'Deluxe room with king-size bed' },
+  { id: IMG.restaurant, cat: 'Restaurant', alt: 'Fine dining restaurant' },
+  { id: IMG.spa, cat: 'Spa', alt: 'Spa treatment room' },
+  { id: IMG.suite1, cat: 'Suites', alt: 'Executive suite living area' },
+  { id: IMG.lobby, cat: 'Lobby', alt: 'Hotel lobby' },
+  { id: IMG.paris, cat: 'Destination', alt: 'Surrounding city destination' },
+  { id: IMG.exterior2, cat: 'Exterior', alt: 'Hotel façade and architecture' },
+  { id: IMG.pool2, cat: 'Pool', alt: 'Poolside loungers' },
+  { id: IMG.deluxe2, cat: 'Rooms', alt: 'Deluxe room interior' },
+  { id: IMG.pres1, cat: 'Suites', alt: 'Presidential suite bedroom' },
+  { id: IMG.restaurant2, cat: 'Restaurant', alt: 'Restaurant dining room' },
+  { id: IMG.spa2, cat: 'Spa', alt: 'Spa relaxation space' },
+  { id: IMG.lobby2, cat: 'Lobby', alt: 'Lobby seating area' },
+  { id: IMG.coast, cat: 'Destination', alt: 'Nearby coastline' },
+  { id: IMG.deluxe3, cat: 'Rooms', alt: 'Marble bathroom' },
+  { id: IMG.pres2, cat: 'Suites', alt: 'Presidential suite lounge' },
+  { id: IMG.steak, cat: 'Restaurant', alt: 'Signature main course' },
+  { id: IMG.city, cat: 'Destination', alt: 'City streets near the hotel' },
+  { id: IMG.family1, cat: 'Rooms', alt: 'Family room' },
+  { id: IMG.dessert, cat: 'Restaurant', alt: 'Pastry chef’s dessert' },
+];
+Copy
+Copy// src/data/faq.js
+export const faqs = [
+  { q: 'What are check-in and check-out times?', a: 'In this demo, check-in begins at 3:00 PM and check-out is at 11:00 AM. A real hotel would confirm these in its policies.' },
+  { q: 'Can I really book a room here?', a: 'No. This is a demonstration website. The booking flow shows how a reservation would work, but no real reservation, payment or inventory check takes place.' },
+  { q: 'Is breakfast included?', a: 'Sample rates are shown without breakfast. Some sample offers mention breakfast purely as illustrative content.' },
+  { q: 'Do you offer airport transfers?', a: 'Airport transfers appear as an example service. A production site would connect to a real transfer provider or the hotel’s concierge.' },
+  { q: 'Are children welcome?', a: 'Our fictional hotel welcomes families, and the Family Room is designed for up to four guests.' },
+];
+Utilities and hooks:
+
+Copy// src/utils/validation.js
+export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v).trim());
+export const isPhone = (v) => /^[+()\d\s.-]{7,20}$/.test(v) && v.replace(/\D/g, '').length >= 7;
+Copy// src/utils/booking.js
+import { SITE } from '../config';
+
+const KEY = 'aurelia_demo_bookings_v1';
+const pad = (n) => String(n).padStart(2, '0');
+const parse = (iso) => { const [y, m, d] = iso.split('-').map(Number); return [y, m, d]; };
+
+export const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export const todayISO = () => toISO(new Date());
+export const addDays = (iso, n) => { const [y, m, d] = parse(iso); return toISO(new Date(y, m - 1, d + n)); };
+
+export const nightsBetween = (a, b) => {
+  if (!a || !b) return 0;
+  const [y1, m1, d1] = parse(a); const [y2, m2, d2] = parse(b);
+  return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
+};
+
+export const formatDate = (iso) => {
+  if (!iso) return '';
+  const [y, m, d] = parse(iso);
+  return new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+export const formatMoney = (n) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: SITE.currency, maximumFractionDigits: 0 }).format(n);
+
+export const defaultStay = () => {
+  const t = todayISO();
+  return { checkIn: addDays(t, 14), checkOut: addDays(t, 17), guests: 2, rooms: 1 };
+};
+
+export function validateStay(s) {
+  const e = {};
+  if (!s.checkIn) e.checkIn = 'Please choose a check-in date.';
+  else if (s.checkIn < todayISO()) e.checkIn = 'Check-in cannot be in the past.';
+  if (!s.checkOut) e.checkOut = 'Please choose a check-out date.';
+  else if (s.checkIn && nightsBetween(s.checkIn, s.checkOut) <= 0) e.checkOut = 'Check-out must be after check-in.';
+  else if (nightsBetween(s.checkIn, s.checkOut) > 30) e.checkOut = 'Demo stays are limited to 30 nights.';
+  if (!(Number(s.guests) >= 1)) e.guests = 'At least one guest is required.';
+  if (!(Number(s.rooms) >= 1)) e.rooms = 'At least one room is required.';
+  else if (Number(s.rooms) > Number(s.guests)) e.rooms = 'Each room needs at least one guest.';
+  return e;
+}
+
+// DEMO ONLY: deterministic, simulated availability. Replace with a real inventory API in production.
+export function getAvailability(room, stay) {
+  const seed = `${room.id}|${stay.checkIn}`;
+  let h = 0;
+  for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const left = h % (room.inventory + 1);
+  const fits = Number(stay.guests) <= room.maxGuests * Number(stay.rooms);
+  const available = fits && left >= Number(stay.rooms);
+  let status = 'available';
+  let label = 'Available (demo)';
+  if (!fits) { status = 'capacity'; label = 'Too small for this party'; }
+  else if (!available) { status = 'soldout'; label = 'Unavailable for these dates (demo)'; }
+  else if (left <= 2) { status = 'limited'; label = `Only ${left} left (demo)`; }
+  return { fits, left, available, status, label };
+}
+
+export const searchRooms = (rooms, stay) => rooms.map((room) => ({ room, ...getAvailability(room, stay) }));
+export const calcTotal = (room, nights, qty) => room.price * nights * qty;
+
+export function getBookings() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; }
+}
+export function getBookingByRef(ref) {
+  return getBookings().find((b) => b.ref.toLowerCase() === String(ref).trim().toLowerCase()) || null;
+}
+export function saveBooking(booking) {
+  try { localStorage.setItem(KEY, JSON.stringify([booking, ...getBookings()])); return true; } catch { return false; }
+}
+export function deleteBooking(ref) {
+  try { localStorage.setItem(KEY, JSON.stringify(getBookings().filter((b) => b.ref !== ref))); } catch { /* ignore */ }
+}
+export function generateReference() {
+  const existing = new Set(getBookings().map((b) => b.ref));
+  let ref;
+  do {
+    const t = Date.now().toString(36).slice(-4).toUpperCase();
+    const r = Math.random().toString(36).slice(2, 6).toUpperCase();
+    ref = `AUR-DEMO-${t}${r}`;
+  } while (existing.has(ref));
+  return ref;
+}
+Copy
+Copy// src/hooks/useDialog.js
+import { useEffect, useRef } from 'react';
+
+const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+export default function useDialog(open, onClose, panelRef, onKey) {
+  const closeRef = useRef(onClose); closeRef.current = onClose;
+  const keyRef = useRef(onKey); keyRef.current = onKey;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const previous = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const list = () => (panelRef.current ? [...panelRef.current.querySelectorAll(FOCUSABLE)] : []);
+    (list()[0] || panelRef.current)?.focus();
+
+    const handler = (e) => {
+      if (e.key === 'Escape') { e.stopPropagation(); closeRef.current?.(); return; }
+      keyRef.current?.(e);
+      if (e.key === 'Tab') {
+        const f = list();
+        if (!f.length) return;
+        const first = f[0]; const last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = overflow;
+      previous?.focus?.();
+    };
+  }, [open, panelRef]);
+}
+Copy
+Copy// src/hooks/usePageMeta.js
+import { useEffect } from 'react';
+
+export default function usePageMeta(title, description) {
+  useEffect(() => {
+    document.title = title ? `${title} | Aurelia Hotel & Resort` : 'Aurelia Hotel & Resort — A Stay Beyond Expectations';
+    if (description) {
+      let m = document.querySelector('meta[name="description"]');
+      if (!m) { m = document.createElement('meta'); m.setAttribute('name', 'description'); document.head.appendChild(m); }
+      m.setAttribute('content', description);
+    }
+  }, [title, description]);
+}
+Context:
+
+Copy// src/context/ToastContext.jsx
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+
+const Ctx = createContext(null);
+const icons = { success: CheckCircle2, error: AlertCircle, info: Info };
+
+export function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([]);
+  const dismiss = useCallback((id) => setToasts((t) => t.filter((x) => x.id !== id)), []);
+  const toast = useCallback((message, type = 'success') => {
+    const id = Date.now() + Math.random();
+    setToasts((t) => [...t.slice(-3), { id, message, type }]);
+    setTimeout(() => dismiss(id), 4500);
+  }, [dismiss]);
+  const value = useMemo(() => ({ toast }), [toast]);
+
+  return (
+    <Ctx.Provider value={value}>
+      {children}
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-4 z-[120] flex flex-col items-center gap-2 px-4 sm:inset-x-auto sm:right-6 sm:items-end">
+        <AnimatePresence>
+          {toasts.map((t) => {
+            const Icon = icons[t.type] || Info;
+            return (
+              <motion.div key={t.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40 }}
+                role="status" className="pointer-events-auto flex w-full max-w-sm items-start gap-3 border border-sand bg-white px-4 py-3 shadow-lg">
+                <Icon size={18} className={t.type === 'error' ? 'mt-0.5 text-red-700' : 'mt-0.5 text-gold-dark'} />
+                <p className="flex-1 text-sm">{t.message}</p>
+                <button onClick={() => dismiss(t.id)} aria-label="Dismiss notification" className="text-charcoal/50 hover:text-charcoal"><X size={16} /></button>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+    </Ctx.Provider>
+  );
+}
+
+export const useToast = () => useContext(Ctx);
+Copy
+Copy// src/context/BookingContext.jsx
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { defaultStay } from '../utils/booking';
+
+const Ctx = createContext(null);
+
+export function BookingProvider({ children }) {
+  const [search, setSearch] = useState(defaultStay);
+  const [modal, setModal] = useState({ open: false, initial: null, key: 0 });
+  const openBooking = useCallback((initial = null) => setModal({ open: true, initial, key: Date.now() }), []);
+  const closeBooking = useCallback(() => setModal((m) => ({ ...m, open: false })), []);
+  const value = useMemo(() => ({ search, setSearch, modal, openBooking, closeBooking }), [search, modal, openBooking, closeBooking]);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+export const useBooking = () => useContext(Ctx);
+Shared components:
+
+Copy// src/components/ui.jsx
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Minus, Plus, Info, Loader2 } from 'lucide-react';
+
+const base = 'inline-flex items-center justify-center gap-2 px-7 py-3.5 text-[12px] font-medium uppercase tracking-[0.18em] transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50';
+const variants = {
+  gold: 'bg-gold text-charcoal hover:bg-gold-dark hover:text-white',
+  dark: 'bg-espresso text-ivory hover:bg-charcoal',
+  outline: 'border border-charcoal/30 text-charcoal hover:border-charcoal hover:bg-charcoal hover:text-ivory',
+  light: 'border border-white/70 text-white hover:bg-white hover:text-charcoal',
+  ghost: 'px-0 text-charcoal underline-offset-8 hover:text-gold-dark hover:underline',
+};
+
+export function Button({ variant = 'gold', to, className = '', children, ...props }) {
+  const cls = `${base} ${variants[variant]} ${className}`;
+  if (to) return <Link to={to} className={cls} {...props}>{children}</Link>;
+  return <button type="button" className={cls} {...props}>{children}</button>;
+}
+
+export function Reveal({ children, delay = 0, y = 28, className = '' }) {
+  return (
+    <motion.div className={className} initial={{ opacity: 0, y }} whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}>
+      {children}
+    </motion.div>
+  );
+}
+
+export function SectionHeading({ eyebrow, title, children, align = 'center', light = false }) {
+  return (
+    <Reveal className={`mb-14 max-w-2xl ${align === 'center' ? 'mx-auto text-center' : ''}`}>
+      {eyebrow && <p className={`eyebrow mb-4 ${light ? '!text-gold-light' : ''}`}>{eyebrow}</p>}
+      <h2 className={`text-4xl leading-tight sm:text-5xl ${light ? 'text-ivory' : ''}`}>{title}</h2>
+      <span className="mx-auto mt-6 block h-px w-16 bg-gold" style={align === 'center' ? {} : { marginLeft: 0 }} />
+      {children && <p className={`mt-6 leading-relaxed ${light ? 'text-ivory/75' : 'text-charcoal/70'}`}>{children}</p>}
+    </Reveal>
+  );
+}
+
+export const fieldProps = (id, error) => ({
+  id,
+  'aria-invalid': error ? true : undefined,
+  'aria-describedby': error ? `${id}-error` : undefined,
+});
+
+export function Field({ label, id, error, children, className = '' }) {
+  return (
+    <div className={className}>
+      <label htmlFor={id} className="mb-2 block text-[11px] font-medium uppercase tracking-[0.16em] text-charcoal/70">{label}</label>
+      {children}
+      {error && <p id={`${id}-error`} role="alert" className="mt-1.5 text-xs text-red-700">{error}</p>}
+    </div>
+  );
+}
+
+export function Counter({ id, label, value, min = 1, max = 12, onChange, error }) {
+  return (
+    <Field label={label} id={id} error={error}>
+      <div className="flex items-center justify-between border border-sand bg-white px-2 py-1.5">
+        <button type="button" aria-label={`Decrease ${label}`} disabled={value <= min} onClick={() => onChange(value - 1)}
+          className="grid h-9 w-9 place-items-center hover:bg-beige disabled:opacity-30"><Minus size={16} /></button>
+        <output id={id} aria-live="polite" className="font-serif text-2xl">{value}</output>
+        <button type="button" aria-label={`Increase ${label}`} disabled={value >= max} onClick={() => onChange(value + 1)}
+          className="grid h-9 w-9 place-items-center hover:bg-beige disabled:opacity-30"><Plus size={16} /></button>
+      </div>
+    </Field>
+  );
+}
+
+export function DemoNotice({ children, className = '' }) {
+  return (
+    <p className={`flex items-start gap-2 border border-gold/40 bg-gold-light/20 px-4 py-3 text-xs leading-relaxed text-espresso ${className}`}>
+      <Info size={15} className="mt-0.5 shrink-0 text-gold-dark" /> <span>{children}</span>
+    </p>
+  );
+}
+
+export const Spinner = ({ size = 28 }) => <Loader2 size={size} className="animate-spin text-gold-dark" aria-label="Loading" />;
+Copy
+Copy// src/components/Img.jsx
+import { useEffect, useRef, useState } from 'react';
+import { imgUrl } from '../data/images';
+
+export default function Img({ id, alt = '', sizes = '100vw', widths = [480, 800, 1200, 1800], className = '', imgClassName = '', priority = false }) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => { if (ref.current?.complete && ref.current.naturalWidth > 0) setLoaded(true); }, []);
+  const srcSet = widths.map((w) => `${imgUrl(id, w)} ${w}w`).join(', ');
+
+  return (
+    <div className={`relative overflow-hidden bg-beige ${className}`}>
+      {failed ? (
+        <div className="grid h-full w-full place-items-center bg-sand/60 p-4 text-center">
+          <div>
+            <p className="font-serif text-4xl tracking-[0.3em] text-gold-dark">A</p>
+            {alt && <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-charcoal/50">{alt}</p>}
+          </div>
+        </div>
+      ) : (
+        <img ref={ref} src={imgUrl(id, widths[1])} srcSet={srcSet} sizes={sizes} alt={alt}
+          loading={priority ? 'eager' : 'lazy'} fetchpriority={priority ? 'high' : 'auto'} decoding="async"
+          onLoad={() => setLoaded(true)} onError={() => setFailed(true)}
+          className={`h-full w-full object-cover transition-[opacity,transform] duration-[900ms] ${loaded ? 'opacity-100' : 'opacity-0'} ${imgClassName}`} />
+      )}
+    </div>
+  );
+}
+Copy// src/components/Modal.jsx
+import { useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { X } from 'lucide-react';
+import useDialog from '../hooks/useDialog';
+
+export default function Modal({ open, onClose, title, children, size = 'max-w-3xl' }) {
+  const ref = useRef(null);
+  useDialog(open, onClose, ref);
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <motion.div className="fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-6"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <div className="absolute inset-0 bg-charcoal/70" onClick={onClose} aria-hidden="true" />
+          <motion.div ref={ref} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}
+            initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className={`relative max-h-[92vh] w-full overflow-y-auto bg-ivory shadow-2xl ${size}`}>
+            <button onClick={onClose} aria-label="Close dialog"
+              className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center bg-white/90 text-charcoal hover:bg-gold">
+              <X size={18} />
+            </button>
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
+Copy
+Copy// src/components/Lightbox.jsx
+import { useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { imgUrl } from '../data/images';
+import useDialog from '../hooks/useDialog';
+
+export default function Lightbox({ items, index, onClose, onIndex }) {
+  const ref = useRef(null);
+  const open = index !== null && index !== undefined && items.length > 0;
+  const go = (d) => onIndex((index + d + items.length) % items.length);
+  useDialog(open, onClose, ref, (e) => {
+    if (e.key === 'ArrowLeft') go(-1);
+    if (e.key === 'ArrowRight') go(1);
+  });
+  const item = open ? items[index] : null;
+
+  return createPortal(
+    <AnimatePresence>
+      {open && item && (
+        <motion.div ref={ref} role="dialog" aria-modal="true" aria-label="Image viewer" tabIndex={-1}
+          className="fixed inset-0 z-[95] flex flex-col bg-charcoal/95"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <div className="flex items-center justify-between px-5 py-4 text-ivory">
+            <p className="text-xs uppercase tracking-[0.2em]">{index + 1} / {items.length}</p>
+            <button onClick={onClose} aria-label="Close image viewer" className="grid h-11 w-11 place-items-center border border-white/30 hover:bg-white/10"><X size={20} /></button>
+          </div>
+          <div className="relative flex min-h-0 flex-1 items-center justify-center px-4 sm:px-20" onClick={onClose}>
+            <AnimatePresence mode="wait">
+              <motion.img key={item.id} src={imgUrl(item.id, 1800)} alt={item.alt}
+                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
+                onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full object-contain" />
+            </AnimatePresence>
+            {items.length > 1 && (
+              <>
+                <button onClick={(e) => { e.stopPropagation(); go(-1); }} aria-label="Previous image"
+                  className="absolute left-3 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center border border-white/30 text-ivory hover:bg-white/10 sm:left-6"><ChevronLeft /></button>
+                <button onClick={(e) => { e.stopPropagation(); go(1); }} aria-label="Next image"
+                  className="absolute right-3 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center border border-white/30 text-ivory hover:bg-white/10 sm:right-6"><ChevronRight /></button>
+              </>
+            )}
+          </div>
+          <p className="px-5 py-4 text-center text-sm text-ivory/80">{item.alt}</p>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
+Copy
+Copy// src/components/ScrollToTop.jsx
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
+export default function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (hash) {
+      const t = setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' }), 150);
+      return () => clearTimeout(t);
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    return undefined;
+  }, [pathname, hash]);
+  return null;
+}
+Copy// src/components/PageHeader.jsx
+import { motion } from 'framer-motion';
+import Img from './Img';
+
+export default function PageHeader({ eyebrow, title, subtitle, image }) {
+  return (
+    <section className="relative flex min-h-[52vh] items-end overflow-hidden bg-espresso pb-16 pt-36 text-ivory">
+      <div className="absolute inset-0"><Img id={image} alt="" priority className="h-full w-full" /></div>
+      <div className="absolute inset-0 bg-charcoal/55" />
+      <div className="container-x relative">
+        {eyebrow && <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="eyebrow mb-4 !text-gold-light">{eyebrow}</motion.p>}
+        <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1 }} className="max-w-3xl text-5xl sm:text-6xl">{title}</motion.h1>
+        {subtitle && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-5 max-w-xl text-ivory/80">{subtitle}</motion.p>}
+      </div>
+    </section>
+  );
+}
+Navbar:
+
+Copy// src/components/Navbar.jsx
+import { useEffect, useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Menu, X } from 'lucide-react';
+import { Button } from './ui';
+import { useBooking } from '../context/BookingContext';
+
+const links = [
+  { to: '/', label: 'Home' },
+  { to: '/rooms', label: 'Rooms & Suites' },
+  { to: '/dining', label: 'Dining' },
+  { to: '/experiences', label: 'Experiences' },
+  { to: '/gallery', label: 'Gallery' },
+  { to: '/contact', label: 'Contact' },
+];
+const heroRoutes = links.map((l) => l.to);
+
+export default function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+  const { pathname } = useLocation();
+  const { openBooking } = useBooking();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => e.key === 'Escape' && setOpen(false);
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', onKey);
+    return () => { document.body.style.overflow = ''; document.removeEventListener('keydown', onKey); };
+  }, [open]);
+
+  const transparent = heroRoutes.includes(pathname) && !scrolled && !open;
+  const light = transparent || open;
+  const linkCls = ({ isActive }) =>
+    `relative py-2 text-[12px] font-medium uppercase tracking-[0.18em] transition-colors after:absolute after:bottom-0 after:left-0 after:h-px after:bg-gold after:transition-all ${
+      isActive ? 'after:w-full' : 'after:w-0 hover:after:w-full'
+    } ${light ? 'text-ivory' : 'text-charcoal'}`;
+
+  return (
+    <>
+      <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
+        open ? 'bg-transparent' : transparent ? 'bg-transparent py-5' : 'border-b border-sand bg-ivory/95 py-3 shadow-sm backdrop-blur'
+      }`}>
+        <div className="container-x flex items-center justify-between">
+          <Link to="/" aria-label="Aurelia Hotel & Resort — home" className={`leading-none ${light ? 'text-ivory' : 'text-espresso'}`}>
+            <span className="block font-serif text-3xl tracking-[0.35em]">AURELIA</span>
+            <span className="mt-1 block text-[9px] uppercase tracking-[0.4em] text-gold">Hotel & Resort</span>
+          </Link>
+          <nav aria-label="Main navigation" className="hidden items-center gap-8 lg:flex">
+            {links.map((l) => <NavLink key={l.to} to={l.to} end={l.to === '/'} className={linkCls}>{l.label}</NavLink>)}
+          </nav>
+          <div className="flex items-center gap-3">
+            <Button onClick={() => openBooking()} className="hidden !px-6 !py-3 sm:inline-flex">Book a Room</Button>
+            <button className={`grid h-11 w-11 place-items-center lg:hidden ${light ? 'text-ivory' : 'text-charcoal'}`}
+              aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="mobile-menu" onClick={() => setOpen((o) => !o)}>
+              {open ? <X /> : <Menu />}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div id="mobile-menu" className="fixed inset-0 z-40 overflow-y-auto bg-espresso pt-28 text-ivory lg:hidden"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <nav aria-label="Mobile navigation" className="container-x flex flex-col">
+              {links.map((l, i) => (
+                <motion.div key={l.to} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i }}>
+                  <NavLink to={l.to} end={l.to === '/'} className={({ isActive }) => `block border-b border-white/10 py-4 font-serif text-3xl ${isActive ? 'text-gold' : ''}`}>{l.label}</NavLink>
+                </motion.div>
+              ))}
+              <Button onClick={() => { setOpen(false); openBooking(); }} className="mt-8">Book a Room</Button>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+Copy
+Booking components:
+
+Copy// src/components/BookingSearch.jsx
+import { useState } from 'react';
+import { Search } from 'lucide-react';
+import { Button, Field, fieldProps } from './ui';
+import { useBooking } from '../context/BookingContext';
+import { addDays, nightsBetween, todayISO, validateStay } from '../utils/booking';
+
+export default function BookingSearch({ onSearch }) {
+  const { search, setSearch } = useBooking();
+  const [errors, setErrors] = useState({});
+  const today = todayISO();
+
+  const update = (key, value) => {
+    setSearch((s) => {
+      const next = { ...s, [key]: value };
+      if (key === 'checkIn' && value && nightsBetween(value, next.checkOut) <= 0) next.checkOut = addDays(value, 1);
+      return next;
+    });
+    setErrors((e) => ({ ...e, [key]: undefined, ...(key === 'checkIn' ? { checkOut: undefined } : {}) }));
+  };
+
+  const submit = (e) => {
+    e.preventDefault();
+    const errs = validateStay(search);
+    setErrors(errs);
+    if (Object.keys(errs).length === 0) onSearch(search);
+  };
+  const cls = (err) => `input ${err ? 'input-error' : ''}`;
+
+  return (
+    <form onSubmit={submit} noValidate aria-label="Search room availability"
+      className="grid gap-4 bg-ivory p-5 shadow-2xl sm:grid-cols-2 lg:grid-cols-[1.2fr_1.2fr_1fr_1fr_auto] lg:p-6">
+      <Field label="Check-in" id="hs-in" error={errors.checkIn}>
+        <input {...fieldProps('hs-in', errors.checkIn)} type="date" min={today} value={search.checkIn} onChange={(e) => update('checkIn', e.target.value)} className={cls(errors.checkIn)} />
+      </Field>
+      <Field label="Check-out" id="hs-out" error={errors.checkOut}>
+        <input {...fieldProps('hs-out', errors.checkOut)} type="date" min={search.checkIn ? addDays(search.checkIn, 1) : today} value={search.checkOut} onChange={(e) => update('checkOut', e.target.value)} className={cls(errors.checkOut)} />
+      </Field>
+      <Field label="Guests" id="hs-guests" error={errors.guests}>
+        <select {...fieldProps('hs-guests', errors.guests)} value={search.guests} onChange={(e) => update('guests', Number(e.target.value))} className={cls(errors.guests)}>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} {n === 1 ? 'guest' : 'guests'}</option>)}
+        </select>
+      </Field>
+      <Field label="Rooms" id="hs-rooms" error={errors.rooms}>
+        <select {...fieldProps('hs-rooms', errors.rooms)} value={search.rooms} onChange={(e) => update('rooms', Number(e.target.value))} className={cls(errors.rooms)}>
+          {Array.from({ length: 6 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} {n === 1 ? 'room' : 'rooms'}</option>)}
+        </select>
+      </Field>
+      <Button type="submit" className="sm:col-span-2 lg:col-span-1 lg:mt-[26px] lg:self-start"><Search size={15} /> Search Availability</Button>
+    </form>
+  );
+}
+Copy
+Copy// src/components/AvailabilityResults.jsx
+import { Link } from 'react-router-dom';
+import { BedDouble, Maximize2, Users } from 'lucide-react';
+import Img from './Img';
+import { Button, DemoNotice } from './ui';
+import { calcTotal, formatMoney, nightsBetween } from '../utils/booking';
+
+const chip = {
+  available: 'bg-emerald-50 text-emerald-800',
+  limited: 'bg-amber-50 text-amber-800',
+  soldout: 'bg-stone-200 text-stone-700',
+  capacity: 'bg-stone-200 text-stone-700',
+};
+
+export default function AvailabilityResults({ items, stay, mode = 'link', selectedId, onSelect, onBook }) {
+  const nights = nightsBetween(stay.checkIn, stay.checkOut);
+  if (!items.length) {
+    return (
+      <div className="border border-sand bg-white p-10 text-center">
+        <BedDouble className="mx-auto mb-3 text-gold-dark" />
+        <p className="font-serif text-2xl">No demo rooms match this party size</p>
+        <p className="mt-2 text-sm text-charcoal/70">Try adding another room or reducing the number of guests.</p>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <DemoNotice className="mb-5">Demo availability: results are simulated for illustration and are not connected to any real hotel inventory.</DemoNotice>
+      <ul className="space-y-4">
+        {items.map(({ room, available, status, label }) => {
+          const selected = selectedId === room.id;
+          return (
+            <li key={room.id} className={`grid gap-4 border bg-white p-3 sm:grid-cols-[200px_1fr_auto] sm:items-center ${selected ? 'border-gold ring-1 ring-gold' : 'border-sand'} ${available ? '' : 'opacity-60'}`}>
+              <Img id={room.images[0]} alt={room.name} sizes="200px" className="aspect-[4/3] sm:aspect-[4/3]" />
+              <div>
+                <span className={`inline-block px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${chip[status]}`}>{label}</span>
+                <h3 className="mt-2 text-2xl">{room.name}</h3>
+                <p className="mt-1 flex flex-wrap gap-x-4 text-xs text-charcoal/65">
+                  <span className="inline-flex items-center gap-1"><Users size={13} /> Up to {room.maxGuests}</span>
+                  <span className="inline-flex items-center gap-1"><Maximize2 size={13} /> {room.size} m²</span>
+                  <span className="inline-flex items-center gap-1"><BedDouble size={13} /> {room.bed}</span>
+                </p>
+                <p className="mt-2 text-xs text-charcoal/60">{formatMoney(room.price)} / night (example price)</p>
+              </div>
+              <div className="flex flex-col gap-2 sm:items-end sm:text-right">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-charcoal/50">Estimated total · {nights} {nights === 1 ? 'night' : 'nights'}</p>
+                  <p className="font-serif text-3xl">{formatMoney(calcTotal(room, nights, stay.rooms))}</p>
+                </div>
+                {mode === 'select' ? (
+                  <Button variant={selected ? 'dark' : 'outline'} disabled={!available} aria-pressed={selected} onClick={() => onSelect(room)} className="!px-5 !py-3">
+                    {selected ? 'Selected' : 'Select'}
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button variant="outline" to={`/rooms/${room.id}`} className="!px-4 !py-3">Details</Button>
+                    <Button disabled={!available} onClick={() => onBook(room)} className="!px-4 !py-3">Book</Button>
+                  </div>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+Copy
+Copy// src/components/BookingFlow.jsx
+import { useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { Button, Counter, DemoNotice, Field, fieldProps, Spinner } from './ui';
+import AvailabilityResults from './AvailabilityResults';
+import { useBooking } from '../context/BookingContext';
+import { useToast } from '../context/ToastContext';
+import { rooms } from '../data/rooms';
+import { SITE } from '../config';
+import { isEmail, isPhone } from '../utils/validation';
+import {
+  addDays, calcTotal, formatDate, formatMoney, generateReference, nightsBetween,
+  saveBooking, searchRooms, todayISO, validateStay,
+} from '../utils/booking';
+
+const STEPS = ['Dates', 'Guests', 'Rooms', 'Details', 'Review'];
+
+export default function BookingFlow({ initial = {}, startStep = 0, onComplete }) {
+  const { search, setSearch } = useBooking();
+  const { toast } = useToast();
+  const [stay, setStay] = useState({
+    checkIn: initial.checkIn || search.checkIn, checkOut: initial.checkOut || search.checkOut,
+    guests: initial.guests || search.guests, rooms: initial.rooms || search.rooms,
+  });
+  const [roomId, setRoomId] = useState(initial.roomId || null);
+  const [guest, setGuest] = useState({ name: '', email: '', phone: '' });
+  const [agree, setAgree] = useState(false);
+  const [step, setStep] = useState(startStep);
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const topRef = useRef(null);
+
+  const all = useMemo(() => searchRooms(rooms, stay), [stay]);
+  const fitting = all.filter((r) => r.fits);
+  const selected = all.find((r) => r.room.id === roomId);
+  const nights = nightsBetween(stay.checkIn, stay.checkOut);
+  const total = selected ? calcTotal(selected.room, nights, stay.rooms) : 0;
+  const cls = (e) => `input ${e ? 'input-error' : ''}`;
+
+  const setStayField = (k, v) => {
+    setStay((s) => {
+      const n = { ...s, [k]: v };
+      if (k === 'checkIn' && v && nightsBetween(v, n.checkOut) <= 0) n.checkOut = addDays(v, 1);
+      return n;
+    });
+    setErrors({});
+  };
+
+  const next = () => {
+    const stayErrors = validateStay(stay);
+    if (step === 0) {
+      const e = { checkIn: stayErrors.checkIn, checkOut: stayErrors.checkOut };
+      if (e.checkIn || e.checkOut) return setErrors(e);
+    }
+    if (step === 1) {
+      const e = { guests: stayErrors.guests, rooms: stayErrors.rooms };
+      if (e.guests || e.rooms) return setErrors(e);
+    }
+    if (step === 2) {
+      if (!selected) return setErrors({ room: 'Please choose a room to continue.' });
+      if (!selected.available) return setErrors({ room: 'That room is not available for these dates (demo).' });
+    }
+    if (step === 3) {
+      const e = {};
+      if (guest.name.trim().length < 2) e.name = 'Please enter your full name.';
+      if (!isEmail(guest.email)) e.email = 'Please enter a valid email address.';
+      if (!isPhone(guest.phone)) e.phone = 'Please enter a valid phone number.';
+      if (Object.keys(e).length) return setErrors(e);
+    }
+    setErrors({});
+    setStep((s) => s + 1);
+    topRef.current?.scrollIntoView({ block: 'nearest' });
+  };
+  const back = () => { setErrors({}); setStep((s) => Math.max(0, s - 1)); };
+
+  const confirm = async () => {
+    if (!agree) return setErrors({ agree: 'Please acknowledge that this is a demo reservation.' });
+    setSubmitting(true);
+    await new Promise((r) => setTimeout(r, 900));
+    const room = selected.room;
+    const ref = generateReference();
+    const booking = {
+      ref, createdAt: new Date().toISOString(), demo: true,
+      roomId: room.id, roomName: room.name, roomImage: room.images[0], pricePerNight: room.price,
+      checkIn: stay.checkIn, checkOut: stay.checkOut, nights, guests: stay.guests, rooms: stay.rooms,
+      total: calcTotal(room, nights, stay.rooms), guest: { ...guest, name: guest.name.trim(), email: guest.email.trim() },
+    };
+    const ok = saveBooking(booking);
+    setSearch(stay);
+    toast(ok ? `Demo booking saved · ${ref}` : 'Booking created, but your browser blocked LocalStorage.', ok ? 'success' : 'error');
+    setSubmitting(false);
+    onComplete?.(ref);
+  };
+
+  return (
+    <div ref={topRef} className="p-6 sm:p-10">
+      <p className="eyebrow mb-2">Demo reservation</p>
+      <h2 className="mb-8 text-3xl sm:text-4xl">Plan Your Stay</h2>
+
+      <ol className="mb-8 flex items-center gap-2" aria-label="Booking progress">
+        {STEPS.map((label, i) => (
+          <li key={label} className="flex flex-1 items-center gap-2 last:flex-none" aria-current={i === step ? 'step' : undefined}>
+            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs ${i < step ? 'border-gold bg-gold text-charcoal' : i === step ? 'border-charcoal bg-charcoal text-ivory' : 'border-sand text-charcoal/40'}`}>
+              {i < step ? <Check size={14} /> : i + 1}
+            </span>
+            <span className={`hidden text-[11px] uppercase tracking-[0.14em] sm:block ${i === step ? 'text-charcoal' : 'text-charcoal/40'}`}>{label}</span>
+            {i < STEPS.length - 1 && <span className="h-px flex-1 bg-sand" />}
+          </li>
+        ))}
+      </ol>
+
+      <AnimatePresence mode="wait">
+        <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }}>
+          {step === 0 && (
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Check-in date" id="bf-in" error={errors.checkIn}>
+                <input {...fieldProps('bf-in', errors.checkIn)} type="date" min={todayISO()} value={stay.checkIn} onChange={(e) => setStayField('checkIn', e.target.value)} className={cls(errors.checkIn)} />
+              </Field>
+              <Field label="Check-out date" id="bf-out" error={errors.checkOut}>
+                <input {...fieldProps('bf-out', errors.checkOut)} type="date" min={stay.checkIn ? addDays(stay.checkIn, 1) : todayISO()} value={stay.checkOut} onChange={(e) => setStayField('checkOut', e.target.value)} className={cls(errors.checkOut)} />
+              </Field>
+              {nights > 0 && <p className="text-sm text-charcoal/70 sm:col-span-2">{nights} {nights === 1 ? 'night' : 'nights'} · {formatDate(stay.checkIn)} to {formatDate(stay.checkOut)}</p>}
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Counter id="bf-guests" label="Guests" value={stay.guests} max={12} error={errors.guests} onChange={(v) => setStayField('guests', v)} />
+              <Counter id="bf-rooms" label="Rooms" value={stay.rooms} max={6} error={errors.rooms} onChange={(v) => setStayField('rooms', v)} />
+            </div>
+          )}
+
+          {step === 2 && (
+            <div>
+              <p className="mb-4 text-sm text-charcoal/70">
+                {formatDate(stay.checkIn)} → {formatDate(stay.checkOut)} · {nights} {nights === 1 ? 'night' : 'nights'} · {stay.guests} guests · {stay.rooms} {stay.rooms === 1 ? 'room' : 'rooms'}
+              </p>
+              <AvailabilityResults mode="select" items={fitting} stay={stay} selectedId={roomId} onSelect={(r) => { setRoomId(r.id); setErrors({}); }} />
+              {errors.room && <p role="alert" className="mt-3 text-sm text-red-700">{errors.room}</p>}
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="grid gap-5">
+              <Field label="Full name" id="bf-name" error={errors.name}>
+                <input {...fieldProps('bf-name', errors.name)} autoComplete="name" value={guest.name} onChange={(e) => setGuest({ ...guest, name: e.target.value })} className={cls(errors.name)} />
+              </Field>
+              <Field label="Email" id="bf-email" error={errors.email}>
+                <input {...fieldProps('bf-email', errors.email)} type="email" autoComplete="email" value={guest.email} onChange={(e) => setGuest({ ...guest, email: e.target.value })} className={cls(errors.email)} />
+              </Field>
+              <Field label="Phone number" id="bf-phone" error={errors.phone}>
+                <input {...fieldProps('bf-phone', errors.phone)} type="tel" autoComplete="tel" value={guest.phone} onChange={(e) => setGuest({ ...guest, phone: e.target.value })} className={cls(errors.phone)} />
+              </Field>
+              <p className="text-xs text-charcoal/60">We only ask for what is necessary. No payment or card details are collected.</p>
+            </div>
+          )}
+
+          {step === 4 && selected && (
+            <div>
+              <dl className="divide-y divide-sand border border-sand bg-white text-sm">
+                {[
+                  ['Room', selected.room.name],
+                  ['Check-in', `${formatDate(stay.checkIn)} · from ${SITE.checkIn}`],
+                  ['Check-out', `${formatDate(stay.checkOut)} · by ${SITE.checkOut}`],
+                  ['Guests', `${stay.guests}`],
+                  ['Rooms', `${stay.rooms}`],
+                  ['Guest', `${guest.name} · ${guest.email} · ${guest.phone}`],
+                ].map(([k, v]) => (
+                  <div key={k} className="grid gap-1 px-4 py-3 sm:grid-cols-[140px_1fr]"><dt className="text-charcoal/60">{k}</dt><dd>{v}</dd></div>
+                ))}
+                <div className="grid gap-1 bg-beige px-4 py-4 sm:grid-cols-[140px_1fr]">
+                  <dt className="text-charcoal/60">Estimated total</dt>
+                  <dd><span className="font-serif text-3xl">{formatMoney(total)}</span>
+                    <span className="ml-2 text-xs text-charcoal/60">{formatMoney(selected.room.price)} × {nights} {nights === 1 ? 'night' : 'nights'} × {stay.rooms} {stay.rooms === 1 ? 'room' : 'rooms'}</span></dd>
+                </div>
+              </dl>
+              <DemoNotice className="mt-5">This is a demo reservation, not a confirmed real-world hotel booking. No payment is taken and no room is held.</DemoNotice>
+              <label className="mt-4 flex items-start gap-3 text-sm">
+                <input type="checkbox" checked={agree} onChange={(e) => { setAgree(e.target.checked); setErrors({}); }} className="mt-1 h-4 w-4 accent-[#A5883F]" aria-invalid={errors.agree ? true : undefined} />
+                <span>I understand this is a demonstration booking only.</span>
+              </label>
+              {errors.agree && <p role="alert" className="mt-1.5 text-xs text-red-700">{errors.agree}</p>}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      <div className="mt-8 flex items-center justify-between border-t border-sand pt-6">
+        <Button variant="outline" onClick={back} disabled={step === 0 || submitting}><ArrowLeft size={15} /> Back</Button>
+        {step < STEPS.length - 1 ? (
+          <Button onClick={next}>Continue <ArrowRight size={15} /></Button>
+        ) : (
+          <Button onClick={confirm} disabled={submitting}>{submitting ? <><Spinner size={16} /> Confirming…</> : 'Confirm Demo Booking'}</Button>
+        )}
+      </div>
+    </div>
+  );
+}
+Copy
+Copy// src/components/BookingModal.jsx
+import { useNavigate } from 'react-router-dom';
+import Modal from './Modal';
+import BookingFlow from './BookingFlow';
+import { useBooking } from '../context/BookingContext';
+
+export default function BookingModal() {
+  const { modal, closeBooking } = useBooking();
+  const navigate = useNavigate();
+  const initial = modal.initial || {};
+  return (
+    <Modal open={modal.open} onClose={closeBooking} title="Book a room (demo)" size="max-w-3xl">
+      {modal.open && (
+        <BookingFlow key={modal.key} initial={initial} startStep={initial.startStep || 0}
+          onComplete={(ref) => { closeBooking(); navigate(`/booking/${ref}`); }} />
+      )}
+    </Modal>
+  );
+}
+Cards, sections and feature components:
+
+Copy// src/components/RoomCard.jsx
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { BedDouble, Maximize2, Users } from 'lucide-react';
+import Img from './Img';
+import { Button } from './ui';
+import { useBooking } from '../context/BookingContext';
+import { formatMoney } from '../utils/booking';
+
+export default function RoomCard({ room, index = 0 }) {
+  const { openBooking } = useBooking();
+  return (
+    <motion.article initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.7, delay: (index % 3) * 0.08 }} className="group flex flex-col border border-sand bg-white">
+      <Link to={`/rooms/${room.id}`} aria-label={`View details for ${room.name}`} className="relative block aspect-[4/3] overflow-hidden">
+        <Img id={room.images[0]} alt={`${room.name}: ${room.tagline}`} sizes="(min-width:1280px) 33vw, (min-width:768px) 50vw, 100vw" className="h-full w-full" imgClassName="group-hover:scale-105" />
+        <div className="absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100">
+          <Img id={room.images[1]} alt="" sizes="(min-width:1280px) 33vw, (min-width:768px) 50vw, 100vw" className="h-full w-full" imgClassName="scale-105" />
+        </div>
+        <span className="absolute left-4 top-4 bg-ivory/95 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em]">{room.category === 'Rooms' ? 'Room' : room.category === 'Suites' ? 'Suite' : 'Family'}</span>
+      </Link>
+      <div className="flex flex-1 flex-col p-6 sm:p-7">
+        <h3 className="text-3xl">{room.name}</h3>
+        <p className="mt-3 text-sm leading-relaxed text-charcoal/70">{room.description}</p>
+        <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-charcoal/70">
+          <li className="inline-flex items-center gap-1.5"><Users size={14} className="text-gold-dark" /> Up to {room.maxGuests} guests</li>
+          <li className="inline-flex items-center gap-1.5"><Maximize2 size={14} className="text-gold-dark" /> {room.size} m²</li>
+          <li className="inline-flex items-center gap-1.5"><BedDouble size={14} className="text-gold-dark" /> {room.bed}</li>
+        </ul>
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {room.amenities.slice(0, 4).map((a) => <li key={a} className="border border-sand px-2.5 py-1 text-[11px] text-charcoal/70">{a}</li>)}
+          <li className="px-1 py-1 text-[11px] text-gold-dark">+{room.amenities.length - 4} more</li>
+        </ul>
+        <div className="mt-6 border-t border-sand pt-5">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-charcoal/50">Example nightly rate · demo price</p>
+          <p className="font-serif text-4xl">{formatMoney(room.price)} <span className="font-sans text-sm text-charcoal/60">/ night</span></p>
+        </div>
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <Button variant="outline" to={`/rooms/${room.id}`} className="!px-3">View Details</Button>
+          <Button onClick={() => openBooking({ roomId: room.id })} className="!px-3">Book Now</Button>
+        </div>
+      </div>
+    </motion.article>
+  );
+}
+Copy
+Copy// src/components/AmenityCard.jsx
+import { motion } from 'framer-motion';
+import Img from './Img';
+
+export default function AmenityCard({ amenity, index = 0 }) {
+  const Icon = amenity.icon;
+  return (
+    <motion.article initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.7, delay: (index % 4) * 0.08 }} className="group border border-sand bg-white">
+      <Img id={amenity.image} alt={amenity.title} sizes="(min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw" className="aspect-[4/3]" imgClassName="group-hover:scale-105" />
+      <div className="relative px-6 pb-7 pt-9">
+        <span className="absolute -top-6 left-6 grid h-12 w-12 place-items-center bg-gold text-charcoal"><Icon size={20} /></span>
+        <h3 className="text-2xl">{amenity.title}</h3>
+        <p className="mt-2 text-sm leading-relaxed text-charcoal/70">{amenity.text}</p>
+      </div>
+    </motion.article>
+  );
+}
+Copy// src/components/Hero.jsx
+import { motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
+import Img from './Img';
+import BookingSearch from './BookingSearch';
+import { Button } from './ui';
+import { IMG } from '../data/images';
+import { useBooking } from '../context/BookingContext';
+
+export default function Hero({ onSearch }) {
+  const { openBooking } = useBooking();
+  return (
+    <section className="relative flex min-h-[100svh] flex-col justify-end overflow-hidden bg-espresso text-ivory">
+      <motion.div className="absolute inset-0" initial={{ scale: 1.12 }} animate={{ scale: 1 }} transition={{ duration: 9, ease: 'easeOut' }}>
+        <Img id={IMG.hero} alt="Luxury resort with an infinity pool at golden hour" priority sizes="100vw" className="h-full w-full" />
+      </motion.div>
+      <div className="absolute inset-0 bg-charcoal/45" />
+      <div className="container-x relative pb-10 pt-36 lg:pb-14">
+        <motion.p initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="eyebrow mb-5 !text-gold-light">Hotel & Resort · Demo experience</motion.p>
+        <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.3 }}
+          className="max-w-4xl text-5xl leading-[1.05] sm:text-7xl lg:text-8xl">A Stay Beyond <em className="text-gold-light">Expectations.</em></motion.h1>
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.7 }} className="mt-6 max-w-xl text-lg leading-relaxed text-ivory/85">
+          Discover exceptional comfort, thoughtful hospitality, and unforgettable experiences in a destination designed for you.
+        </motion.p>
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.95 }} className="mt-9 flex flex-wrap gap-4">
+          <Button variant="light" to="/rooms">Explore Our Rooms</Button>
+          <Button onClick={() => openBooking()}>Book Your Stay</Button>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 1.1 }} className="mt-12 text-charcoal">
+          <BookingSearch onSearch={onSearch} />
+        </motion.div>
+        <ChevronDown className="mx-auto mt-6 hidden animate-bounce text-ivory/60 lg:block" aria-hidden="true" />
+      </div>
+    </section>
+  );
+}
+Copy
+Copy// src/components/About.jsx
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { BedDouble, ConciergeBell, Sparkles } from 'lucide-react';
+import Img from './Img';
+import { Button, Reveal } from './ui';
+import { IMG } from '../data/images';
+
+const highlights = [
+  { icon: ConciergeBell, title: 'Exceptional Service', text: 'Attentive, discreet and always one step ahead.' },
+  { icon: BedDouble, title: 'Refined Comfort', text: 'Carefully designed rooms made for deep rest.' },
+  { icon: Sparkles, title: 'Memorable Experiences', text: 'Moments curated around how you like to travel.' },
+];
+
+export default function About() {
+  const [more, setMore] = useState(false);
+  return (
+    <section className="py-24 lg:py-32" id="about">
+      <div className="container-x grid items-center gap-14 lg:grid-cols-2 lg:gap-24">
+        <div className="relative">
+          <motion.div initial={{ clipPath: 'inset(0 100% 0 0)' }} whileInView={{ clipPath: 'inset(0 0% 0 0)' }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: 1.3, ease: [0.76, 0, 0.24, 1] }}>
+            <Img id={IMG.exterior1} alt="The Aurelia hotel façade and terrace" sizes="(min-width:1024px) 50vw, 100vw" className="aspect-[4/5] w-full" />
+          </motion.div>
+          <span aria-hidden="true" className="absolute -bottom-5 -right-5 -z-10 hidden h-3/4 w-3/4 border border-gold sm:block" />
+        </div>
+        <Reveal>
+          <p className="eyebrow mb-4">About our hotel</p>
+          <h2 className="text-4xl leading-tight sm:text-5xl">Where Luxury Meets Comfort.</h2>
+          <span className="mt-6 block h-px w-16 bg-gold" />
+          <p className="mt-6 leading-relaxed text-charcoal/75">
+            Aurelia is an imagined retreat built around carefully designed rooms, attentive service, relaxing spaces and memorable experiences. Every corner is shaped by warm materials, natural light and a quiet confidence that lets you simply arrive and exhale.
+          </p>
+          <AnimatePresence initial={false}>
+            {more && (
+              <motion.p initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden leading-relaxed text-charcoal/75">
+                <span className="mt-4 block">From a morning swim in the infinity pool to an evening tasting menu, the day unfolds at your pace. Our team anticipates what you need before you ask, whether it is a quiet table, a late check-out or a private tour of the city. This website and hotel are fictional and created for demonstration purposes.</span>
+              </motion.p>
+            )}
+          </AnimatePresence>
+          <ul className="my-10 grid gap-6 sm:grid-cols-3">
+            {highlights.map(({ icon: Icon, title, text }) => (
+              <li key={title}>
+                <Icon className="mb-3 text-gold-dark" size={26} strokeWidth={1.4} />
+                <h3 className="text-xl">{title}</h3>
+                <p className="mt-1 text-xs leading-relaxed text-charcoal/65">{text}</p>
+              </li>
+            ))}
+          </ul>
+          <Button variant="outline" onClick={() => setMore((m) => !m)} aria-expanded={more}>{more ? 'Show Less' : 'Learn More'}</Button>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+Copy
+Copy// src/components/Offers.jsx
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Check } from 'lucide-react';
+import Img from './Img';
+import Modal from './Modal';
+import { Button, DemoNotice, Reveal, SectionHeading } from './ui';
+import { offers } from '../data/offers';
+import { useBooking } from '../context/BookingContext';
+
+export default function Offers() {
+  const [active, setActive] = useState(null);
+  const navigate = useNavigate();
+  const { openBooking } = useBooking();
+  return (
+    <section id="offers" className="scroll-mt-20 bg-beige py-24 lg:py-32">
+      <div className="container-x">
+        <SectionHeading eyebrow="Special offers" title="Stay a Little Longer">
+          All offers below are sample content and are not currently available.
+        </SectionHeading>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {offers.map((o, i) => (
+            <Reveal key={o.id} delay={i * 0.08}>
+              <article className="group flex h-full flex-col border border-sand bg-white">
+                <div className="relative">
+                  <Img id={o.image} alt={o.title} sizes="(min-width:1024px) 25vw, 50vw" className="aspect-[4/3]" imgClassName="group-hover:scale-105" />
+                  <span className="absolute left-3 top-3 bg-charcoal px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-ivory">Sample offer</span>
+                </div>
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="text-2xl">{o.title}</h3>
+                  <p className="mt-1 text-sm font-medium text-gold-dark">{o.price}</p>
+                  <p className="mt-3 flex-1 text-sm leading-relaxed text-charcoal/70">{o.text}</p>
+                  <Button variant="outline" className="mt-6 !px-4" onClick={() => setActive(o)}>View Offer</Button>
+                </div>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+      <Modal open={!!active} onClose={() => setActive(null)} title={active?.title || 'Offer'} size="max-w-2xl">
+        {active && (
+          <>
+            <Img id={active.image} alt={active.title} sizes="672px" className="aspect-[16/9]" />
+            <div className="p-6 sm:p-10">
+              <p className="eyebrow mb-2">Sample offer</p>
+              <h3 className="text-4xl">{active.title}</hCopy
+Copy3>
+              <p className="mt-2 font-medium text-gold-dark">{active.price}</p>
+              <p className="mt-4 leading-relaxed text-charcoal/75">{active.text}</p>
+              <ul className="mt-5 space-y-2">
+                {active.includes.map((x) => (
+                  <li key={x} className="flex items-center gap-2 text-sm"><Check size={15} className="text-gold-dark" /> {x}</li>
+                ))}
+              </ul>
+              <DemoNotice className="mt-6">Sample content only. This offer is fictional and is not currently available to book.</DemoNotice>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button onClick={() => { setActive(null); openBooking(); }}>Try the Demo Booking</Button>
+                <Button variant="outline" onClick={() => { setActive(null); navigate('/rooms'); }}>Browse Rooms</Button>
+              </div>
+            </div>
+          </>
+        )}
+      </Modal>
+    </section>
+  );
+}
+Copy// src/components/ReviewCarousel.jsx
+import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Quote, Star } from 'lucide-react';
+import { SectionHeading } from './ui';
+import { reviews } from '../data/reviews';
+
+export default function ReviewCarousel() {
+  const [i, setI] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const go = (d) => setI((c) => (c + d + reviews.length) % reviews.length);
+
+  useEffect(() => {
+    if (paused) return undefined;
+    const t = setInterval(() => setI((c) => (c + 1) % reviews.length), 8000);
+    return () => clearInterval(t);
+  }, [paused]);
+
+  const r = reviews[i];
+  return (
+    <section className="bg-espresso py-24 text-ivory lg:py-32" aria-roledescription="carousel" aria-label="Guest reviews"
+      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
+      <div className="container-x">
+        <SectionHeading eyebrow="Guest reviews" title="Words from Our Guests" light>
+          Demonstration content: these fictional reviews are placeholders until real guest feedback is available.
+        </SectionHeading>
+        <div className="mx-auto max-w-3xl text-center">
+          <Quote className="mx-auto mb-6 text-gold" size={36} strokeWidth={1.2} />
+          <div className="min-h-[260px] sm:min-h-[220px]" aria-live="polite">
+            <AnimatePresence mode="wait">
+              <motion.figure key={r.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.4 }}>
+                <div className="mb-5 flex justify-center gap-1" role="img" aria-label={`${r.rating} out of 5 stars`}>
+                  {Array.from({ length: 5 }, (_, n) => <Star key={n} size={18} className={n < r.rating ? 'fill-gold text-gold' : 'text-ivory/30'} />)}
+                </div>
+                <blockquote className="font-serif text-2xl leading-relaxed sm:text-3xl">“{r.text}”</blockquote>
+                <figcaption className="mt-6 text-sm">
+                  <span className="font-medium uppercase tracking-[0.18em]">{r.name}</span>
+                  {r.stay && <span className="block text-ivory/60">{r.stay} · sample review</span>}
+                </figcaption>
+              </motion.figure>
+            </AnimatePresence>
+          </div>
+          <div className="mt-8 flex items-center justify-center gap-5">
+            <button onClick={() => go(-1)} aria-label="Previous review" className="grid h-11 w-11 place-items-center border border-white/30 hover:bg-white/10"><ChevronLeft size={18} /></button>
+            <div className="flex gap-2">
+              {reviews.map((x, n) => (
+                <button key={x.id} onClick={() => setI(n)} aria-label={`Show review ${n + 1}`} aria-current={n === i}
+                  className={`h-1.5 transition-all ${n === i ? 'w-8 bg-gold' : 'w-3 bg-white/30 hover:bg-white/60'}`} />
+              ))}
+            </div>
+            <button onClick={() => go(1)} aria-label="Next review" className="grid h-11 w-11 place-items-center border border-white/30 hover:bg-white/10"><ChevronRight size={18} /></button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+Copy
+Copy// src/components/Gallery.jsx
+import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Maximize2 } from 'lucide-react';
+import Img from './Img';
+import Lightbox from './Lightbox';
+import { galleryCategories, galleryItems } from '../data/gallery';
+
+export default function Gallery({ limit, filters = true }) {
+  const [cat, setCat] = useState('All');
+  const [idx, setIdx] = useState(null);
+  const items = useMemo(() => galleryItems.filter((i) => cat === 'All' || i.cat === cat), [cat]);
+  const shown = limit ? items.slice(0, limit) : items;
+
+  return (
+    <div>
+      {filters && (
+        <div role="group" aria-label="Filter gallery by category" className="mb-10 flex flex-wrap justify-center gap-2">
+          {galleryCategories.map((c) => (
+            <button key={c} onClick={() => setCat(c)} aria-pressed={cat === c}
+              className={`border px-4 py-2 text-[11px] uppercase tracking-[0.16em] transition-colors ${cat === c ? 'border-espresso bg-espresso text-ivory' : 'border-sand hover:border-gold'}`}>{c}</button>
+          ))}
+        </div>
+      )}
+      {shown.length === 0 ? (
+        <p className="py-16 text-center text-charcoal/60">No photos in this category yet.</p>
+      ) : (
+        <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 [&>*]:mb-4">
+          {shown.map((item, n) => (
+            <motion.button key={item.id} layout initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
+              onClick={() => setIdx(n)} aria-label={`Open image: ${item.alt}`} className="group relative block w-full break-inside-avoid overflow-hidden">
+              <Img id={item.id} alt={item.alt} widths={[480, 800, 1200]} sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+                className={n % 3 === 0 ? 'aspect-[3/4]' : n % 3 === 1 ? 'aspect-[4/3]' : 'aspect-square'} imgClassName="group-hover:scale-105" />
+              <span className="absolute inset-0 flex items-end justify-between bg-charcoal/0 p-4 text-ivory opacity-0 transition-all duration-500 group-hover:bg-charcoal/40 group-hover:opacity-100 group-focus-visible:opacity-100">
+                <span className="text-[11px] uppercase tracking-[0.18em]">{item.cat}</span><Maximize2 size={18} />
+              </span>
+            </motion.button>
+          ))}
+        </div>
+      )}
+      <Lightbox items={shown} index={idx} onClose={() => setIdx(null)} onIndex={setIdx} />
+    </div>
+  );
+}
+Copy
+Copy// src/components/AmenitiesSection.jsx
+import AmenityCard from './AmenityCard';
+import { SectionHeading } from './ui';
+import { amenities } from '../data/amenities';
+
+export default function AmenitiesSection() {
+  return (
+    <section className="py-24 lg:py-32" id="amenities">
+      <div className="container-x">
+        <SectionHeading eyebrow="Hotel amenities" title="Everything, Beautifully Considered">
+          Sample amenities for this fictional resort, designed to show how a premium hotel might present its services.
+        </SectionHeading>
+        <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          {amenities.map((a, i) => <AmenityCard key={a.id} amenity={a} index={i} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+Copy// src/components/ExperienceGrid.jsx
+import { useState } from 'react';
+import { Check } from 'lucide-react';
+import Img from './Img';
+import Modal from './Modal';
+import { Button, DemoNotice, Reveal, SectionHeading } from './ui';
+import { experiences } from '../data/experiences';
+import { useBooking } from '../context/BookingContext';
+
+export default function ExperienceGrid() {
+  const [active, setActive] = useState(null);
+  const { openBooking } = useBooking();
+  return (
+    <section className="bg-beige py-24 lg:py-32" id="experiences">
+      <div className="container-x">
+        <SectionHeading eyebrow="Experiences" title="Make Every Moment Special">
+          Six sample experiences, each shaped around a different way of travelling.
+        </SectionHeading>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {experiences.map((e, i) => {
+            const Icon = e.icon;
+            return (
+              <Reveal key={e.id} delay={(i % 3) * 0.08}>
+                <article className="group relative h-full overflow-hidden bg-espresso text-ivory">
+                  <Img id={e.image} alt={e.title} sizes="(min-width:1024px) 33vw, (min-width:768px) 50vw, 100vw" className="aspect-[4/5]" imgClassName="opacity-80 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/20 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-6">
+                    <Icon className="mb-3 text-gold" size={24} strokeWidth={1.4} />
+                    <h3 className="text-3xl">{e.title}</h3>
+                    <p className="mt-2 text-sm text-ivory/80">{e.short}</p>
+                    <Button variant="light" className="mt-5 !px-5 !py-3" onClick={() => setActive(e)}>Explore Experience</Button>
+                  </div>
+                </article>
+              </Reveal>
+            );
+          })}
+        </div>
+      </div>
+      <Modal open={!!active} onClose={() => setActive(null)} title={active?.title || 'Experience'} size="max-w-2xl">
+        {active && (
+          <>
+            <Img id={active.image} alt={active.title} sizes="672px" className="aspect-[16/9]" />
+            <div className="p-6 sm:p-10">
+              <p className="eyebrow mb-2">Sample experience</p>
+              <h3 className="text-4xl">{active.title}</h3>
+              <p className="mt-2 font-medium text-gold-dark">{active.from}</p>
+              <p className="mt-4 leading-relaxed text-charcoal/75">{active.long}</p>
+              <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+                {active.includes.map((x) => <li key={x} className="flex items-center gap-2 text-sm"><Check size={15} className="text-gold-dark" /> {x}</li>)}
+              </ul>
+              <DemoNotice className="mt-6">Fictional experience and example pricing for demonstration. Nothing here can be booked for real.</DemoNotice>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button onClick={() => { setActive(null); openBooking(); }}>Plan a Demo Stay</Button>
+                <Button variant="outline" onClick={() => setActive(null)}>Close</Button>
+              </div>
+            </div>
+          </>
+        )}
+      </Modal>
+    </section>
+  );
+}
+Copy
+Copy// src/components/Footer.jsx
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Facebook, Instagram, Mail, MapPin, Phone, Twitter, Youtube } from 'lucide-react';
+import { Button } from './ui';
+import { SITE } from '../config';
+import { useToast } from '../context/ToastContext';
+import { useBooking } from '../context/BookingContext';
+import { isEmail } from '../utils/validation';
+
+const socials = [
+  { key: 'instagram', label: 'Instagram', icon: Instagram },
+  { key: 'facebook', label: 'Facebook', icon: Facebook },
+  { key: 'twitter', label: 'Twitter / X', icon: Twitter },
+  { key: 'youtube', label: 'YouTube', icon: Youtube },
+];
+
+export default function Footer() {
+  const { toast } = useToast();
+  const { openBooking } = useBooking();
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
+
+  const subscribe = (e) => {
+    e.preventDefault();
+    if (!isEmail(email)) { setDone(false); return setError('Please enter a valid email address.'); }
+    setError(''); setDone(true); setEmail('');
+    toast('Demo only: no mailing list is connected, so nothing was subscribed.', 'info');
+  };
+  const col = 'text-sm text-ivory/70 transition-colors hover:text-gold';
+
+  return (
+    <footer className="bg-charcoal text-ivory">
+      <div className="container-x grid gap-12 py-16 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1.3fr]">
+        <div>
+          <Link to="/" className="block leading-none">
+            <span className="block font-serif text-3xl tracking-[0.35em]">AURELIA</span>
+            <span className="mt-1 block text-[9px] uppercase tracking-[0.4em] text-gold">Hotel & Resort</span>
+          </Link>
+          <p className="mt-5 max-w-xs text-sm leading-relaxed text-ivory/70">A fictional luxury retreat of refined rooms, attentive service and memorable experiences. This website is a demonstration.</p>
+          <div className="mt-6 flex gap-3">
+            {socials.map(({ key, label, icon: Icon }) => SITE.social[key] ? (
+              <a key={key} href={SITE.social[key]} target="_blank" rel="noreferrer" aria-label={label} className="grid h-10 w-10 place-items-center border border-white/20 hover:border-gold hover:text-gold"><Icon size={16} /></a>
+            ) : (
+              <button key={key} aria-label={`${label} (demo link)`} onClick={() => toast(`${label} is a demo link. Add a real URL in src/config.js.`, 'info')} className="grid h-10 w-10 place-items-center border border-white/20 hover:border-gold hover:text-gold"><Icon size={16} /></button>
+            ))}
+          </div>
+        </div>
+
+        <nav aria-label="Footer navigation">
+          <h3 className="mb-5 text-xl text-gold">Explore</h3>
+          <ul className="space-y-3">
+            {[['/', 'Home'], ['/rooms', 'Rooms & Suites'], ['/dining', 'Dining'], ['/experiences', 'Experiences'], ['/gallery', 'Gallery'], ['/contact', 'Contact'], ['/booking', 'My Demo Booking']].map(([to, l]) => (
+              <li key={to}><Link to={to} className={col}>{l}</Link></li>
+            ))}
+          </ul>
+        </nav>
+
+        <div>
+          <h3 className="mb-5 text-xl text-gold">Rooms & Services</h3>
+          <ul className="space-y-3">
+            <li><Link to="/rooms/deluxe-garden-room" className={col}>Deluxe Rooms</Link></li>
+            <li><Link to="/rooms/executive-suite" className={col}>Executive Suite</Link></li>
+            <li><Link to="/rooms/presidential-suite" className={col}>Presidential Suite</Link></li>
+            <li><Link to="/rooms/family-room" className={col}>Family Room</Link></li>
+            <li><Link to="/experiences" className={col}>Spa & Wellness</Link></li>
+            <li><button onClick={() => openBooking()} className={col}>Book a Room</button></li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="mb-5 text-xl text-gold">Contact</h3>
+          <ul className="space-y-3 text-sm text-ivory/70">
+            <li className="flex gap-3"><MapPin size={16} className="mt-0.5 shrink-0 text-gold" /> <span>{SITE.address.join(', ')}</span></li>
+            <li className="flex gap-3"><Phone size={16} className="shrink-0 text-gold" /> {SITE.phone}</li>
+            <li className="flex gap-3"><Mail size={16} className="shrink-0 text-gold" /> {SITE.email}</li>
+          </ul>
+          <form onSubmit={subscribe} noValidate className="mt-6" aria-label="Newsletter subscription">
+            <label htmlFor="nl-email" className="sr-only">Email address for newsletter</label>
+            <div className="flex">
+              <input id="nl-email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} placeholder="Your email address"
+                aria-invalid={error ? true : undefined} aria-describedby="nl-msg"
+                className="min-w-0 flex-1 border border-white/20 bg-transparent px-4 py-3 text-sm placeholder:text-ivory/40 focus:border-gold focus:outline-none" />
+              <Button type="submit" className="!px-5">Join</Button>
+            </div>
+            <p id="nl-msg" role={error ? 'alert' : 'status'} className={`mt-2 text-xs ${error ? 'text-red-300' : 'text-gold-light'}`}>
+              {error || (done ? 'Demo success: no email was stored or sent.' : 'Demo newsletter form: no mailing list is connected.')}
+            </p>
+          </form>
+        </div>
+      </div>
+      <div className="border-t border-white/10">
+        <div className="container-x flex flex-col items-center justify-between gap-3 py-6 text-xs text-ivory/55 sm:flex-row">
+          <p>© {new Date().getFullYear()} Aurelia Hotel & Resort. A fictional demonstration brand.</p>
+          <p className="flex gap-5"><Link to="/privacy" className="hover:text-gold">Privacy Policy</Link><Link to="/terms" className="hover:text-gold">Terms</Link></p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+Copy
+Pages:
+
+Copy// src/pages/Home.jsx
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import Hero from '../components/Hero';
+import About from '../components/About';
+import AmenitiesSection from '../components/AmenitiesSection';
+import ExperienceGrid from '../components/ExperienceGrid';
+import Gallery from '../components/Gallery';
+import ReviewCarousel from '../components/ReviewCarousel';
+import Offers from '../components/Offers';
+import RoomCard from '../components/RoomCard';
+import AvailabilityResults from '../components/AvailabilityResults';
+import Img from '../components/Img';
+import { Button, Reveal, SectionHeading, Spinner } from '../components/ui';
+import { rooms } from '../data/rooms';
+import { IMG } from '../data/images';
+import { useBooking } from '../context/BookingContext';
+import { formatDate, nightsBetween, searchRooms } from '../utils/booking';
+import usePageMeta from '../hooks/usePageMeta';
+
+export default function Home() {
+  usePageMeta('', 'Aurelia Hotel & Resort is a demonstration luxury hotel website with a working demo booking flow.');
+  const { openBooking } = useBooking();
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState(null);
+  const ref = useRef(null);
+  const featured = ['deluxe-garden-room', 'executive-suite', 'presidential-suite'].map((id) => rooms.find((r) => r.id === id));
+
+  const onSearch = (stay) => {
+    setResults(null); setLoading(true);
+    setTimeout(() => { setResults({ stay, items: searchRooms(rooms, stay) }); setLoading(false); }, 700);
+  };
+  useEffect(() => {
+    if (loading || results) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [loading, results]);
+
+  return (
+    <>
+      <Hero onSearch={onSearch} />
+
+      {(loading || results) && (
+        <section ref={ref} className="scroll-mt-20 bg-beige py-16" aria-live="polite">
+          <div className="container-x">
+            {loading ? (
+              <div className="grid place-items-center gap-3 py-12"><Spinner size={34} /><p className="text-sm text-charcoal/60">Searching demo availability…</p></div>
+            ) : (
+              <>
+                <h2 className="text-3xl sm:text-4xl">Demo availability</h2>
+                <p className="mb-6 mt-2 text-sm text-charcoal/70">
+                  {formatDate(results.stay.checkIn)} → {formatDate(results.stay.checkOut)} · {nightsBetween(results.stay.checkIn, results.stay.checkOut)} nights · {results.stay.guests} guests · {results.stay.rooms} {results.stay.rooms === 1 ? 'room' : 'rooms'}
+                </p>
+                <AvailabilityResults items={results.items} stay={results.stay} onBook={(room) => openBooking({ ...results.stay, roomId: room.id, startStep: 3 })} />
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+      <About />
+
+      <section className="bg-beige py-24 lg:py-32">
+        <div className="container-x">
+          <SectionHeading eyebrow="Rooms & suites" title="Rest, Beautifully">Example rooms with fictional demonstration prices.</SectionHeading>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{featured.map((r, i) => <RoomCard key={r.id} room={r} index={i} />)}</div>
+          <div className="mt-12 text-center"><Button variant="dark" to="/rooms">View All Rooms & Suites</Button></div>
+        </div>
+      </section>
+
+      <AmenitiesSection />
+
+      <section className="bg-espresso text-ivory">
+        <div className="grid lg:grid-cols-2">
+          <Img id={IMG.restaurant} alt="Elegant restaurant dining room" sizes="(min-width:1024px) 50vw, 100vw" className="aspect-[4/3] lg:aspect-auto lg:min-h-[560px]" />
+          <Reveal className="flex flex-col justify-center px-6 py-16 sm:px-14 lg:px-20">
+            <p className="eyebrow mb-4 !text-gold-light">Restaurant & dining</p>
+            <h2 className="text-4xl sm:text-5xl">An Evening to Savour</h2>
+            <span className="mt-6 block h-px w-16 bg-gold" />
+            <p className="mt-6 max-w-md leading-relaxed text-ivory/75">Seasonal tasting menus, a considered wine list and a dining room made for lingering. Menu and hours are fictional examples.</p>
+            <div className="mt-8"><Button to="/dining">Discover Dining</Button></div>
+          </Reveal>
+        </div>
+      </section>
+
+      <ExperienceGrid />
+
+      <section className="py-24 lg:py-32">
+        <div className="container-x">
+          <SectionHeading eyebrow="Gallery" title="A Glimpse of Aurelia">Sample photography of rooms, pool, dining and destination.</SectionHeading>
+          <Gallery limit={6} filters={false} />
+          <div className="mt-12 text-center"><Button variant="outline" to="/gallery">View Full Gallery</Button></div>
+        </div>
+      </section>
+
+      <ReviewCarousel />
+      <Offers />
+
+      <section className="py-20 text-center">
+        <Reveal className="container-x">
+          <h2 className="text-4xl sm:text-5xl">Ready to Experience Aurelia?</h2>
+          <p className="mx-auto mt-4 max-w-md text-charcoal/70">Walk through the complete demo booking flow in under a minute.</p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Button onClick={() => openBooking()}>Book a Room</Button>
+            <Button variant="outline" to="/contact">Contact Us</Button>
+          </div>
+          <p className="mt-6 text-xs text-charcoal/50"><Link to="/booking" className="underline underline-offset-4 hover:text-gold-dark">Find a saved demo booking</Link></p>
+        </Reveal>
+      </section>
+    </>
+  );
+}
+Copy
+Copy// src/pages/Rooms.jsx
+import { useMemo, useState } from 'react';
+import PageHeader from '../components/PageHeader';
+import RoomCard from '../components/RoomCard';
+import { DemoNotice } from '../components/ui';
+import { roomCategories, rooms } from '../data/rooms';
+import { IMG } from '../data/images';
+import usePageMeta from '../hooks/usePageMeta';
+
+const sorts = {
+  recommended: ['Recommended', (a, b) => a.order - b.order],
+  'price-asc': ['Price: low to high', (a, b) => a.price - b.price],
+  'price-desc': ['Price: high to low', (a, b) => b.price - a.price],
+  capacity: ['Occupancy: highest first', (a, b) => b.maxGuests - a.maxGuests],
+  size: ['Size: largest first', (a, b) => b.size - a.size],
+};
+
+export default function Rooms() {
+  usePageMeta('Rooms & Suites', 'Browse demonstration rooms and suites at Aurelia Hotel & Resort, with example nightly prices.');
+  const [cat, setCat] = useState('All');
+  const [sort, setSort] = useState('recommended');
+  const list = useMemo(
+    () => rooms.filter((r) => cat === 'All' || r.category === cat).sort(sorts[sort][1]),
+    [cat, sort]
+  );
+  return (
+    <>
+      <PageHeader eyebrow="Accommodation" title="Rooms & Suites" subtitle="Calm, elegant spaces designed for deep rest." image={IMG.suite1} />
+      <section className="py-16 lg:py-24">
+        <div className="container-x">
+          <DemoNotice className="mb-10">All room details and prices are fictional demonstration content.</DemoNotice>
+          <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div role="group" aria-label="Filter rooms by category" className="flex flex-wrap gap-2">
+              {roomCategories.map((c) => (
+                <button key={c} onClick={() => setCat(c)} aria-pressed={cat === c}
+                  className={`border px-5 py-2.5 text-[11px] uppercase tracking-[0.16em] transition-colors ${cat === c ? 'border-espresso bg-espresso text-ivory' : 'border-sand hover:border-gold'}`}>{c}</button>
+              ))}
+            </div>
+            <div className="sm:w-64">
+              <label htmlFor="sort" className="mb-2 block text-[11px] uppercase tracking-[0.16em] text-charcoal/70">Sort by</label>
+              <select id="sort" value={sort} onChange={(e) => setSort(e.target.value)} className="input">
+                {Object.entries(sorts).map(([k, [label]]) => <option key={k} value={k}>{label}</option>)}
+              </select>
+            </div>
+          </div>
+          <p className="mb-6 text-sm text-charcoal/60" aria-live="polite">{list.length} {list.length === 1 ? 'option' : 'options'} shown</p>
+          {list.length === 0 ? (
+            <p className="py-16 text-center text-charcoal/60">No rooms in this category.</p>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{list.map((r, i) => <RoomCard key={r.id} room={r} index={i} />)}</div>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}
+Copy
+Copy// src/pages/RoomDetails.jsx
+import { useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { BedDouble, Check, ChevronLeft, ChevronRight, Clock, Eye, Maximize2, Users } from 'lucide-react';
+import Img from '../components/Img';
+import Lightbox from '../components/Lightbox';
+import RoomCard from '../components/RoomCard';
+import { Button, DemoNotice, Field, fieldProps } from '../components/ui';
+import NotFound from './NotFound';
+import { getRoom, rooms } from '../data/rooms';
+import { SITE } from '../config';
+import { useBooking } from '../context/BookingContext';
+import { useToast } from '../context/ToastContext';
+import usePageMeta from '../hooks/usePageMeta';
+import { addDays, calcTotal, formatMoney, getAvailability, nightsBetween, todayISO, validateStay } from '../utils/booking';
+
+function Details({ room }) {
+  usePageMeta(room.name, room.description);
+  const { search, setSearch, openBooking } = useBooking();
+  const { toast } = useToast();
+  const [i, setI] = useState(0);
+  const [lb, setLb] = useState(null);
+  const [stay, setStay] = useState(search);
+  const [errors, setErrors] = useState({});
+  const imgs = room.images.map((id, n) => ({ id, alt: `${room.name}, photo ${n + 1}` }));
+  const go = (d) => setI((c) => (c + d + imgs.length) % imgs.length);
+  const nights = nightsBetween(stay.checkIn, stay.checkOut);
+  const av = nights > 0 ? getAvailability(room, stay) : null;
+  const cls = (e) => `input ${e ? 'input-error' : ''}`;
+
+  const upd = (k, v) => {
+    setStay((s) => {
+      const n = { ...s, [k]: v };
+      if (k === 'checkIn' && v && nightsBetween(v, n.checkOut) <= 0) n.checkOut = addDays(v, 1);
+      return n;
+    });
+    setErrors({});
+  };
+  const submit = (e) => {
+    e.preventDefault();
+    const errs = validateStay(stay);
+    setErrors(errs);
+    if (Object.keys(errs).length) return;
+    if (!av.available) return toast(av.fits ? 'Not available for these dates (demo). Try other dates.' : `This room sleeps up to ${room.maxGuests} per room. Add rooms or choose another.`, 'error');
+    setSearch(stay);
+    openBooking({ ...stay, roomId: room.id, startStep: 3 });
+  };
+  const others = rooms.filter((r) => r.id !== room.id).slice(0, 3);
+
+  return (
+    <div className="pt-28">
+      <div className="container-x">
+        <nav aria-label="Breadcrumb" className="mb-6 text-xs text-charcoal/60">
+          <Link to="/" className="hover:text-gold-dark">Home</Link> / <Link to="/rooms" className="hover:text-gold-dark">Rooms & Suites</Link> / <span className="text-charcoal">{room.name}</span>
+        </nav>
+
+        <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-14">
+          <div>
+            <div className="relative">
+              <button onClick={() => setLb(i)} aria-label="Open larger image" className="block w-full cursor-zoom-in">
+                <AnimatePresence mode="wait">
+                  <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+                    <Img id={imgs[i].id} alt={imgs[i].alt} priority sizes="(min-width:1024px) 60vw, 100vw" className="aspect-[3/2]" />
+                  </motion.div>
+                </AnimatePresence>
+              </button>
+              <button onClick={() => go(-1)} aria-label="Previous image" className="absolute left-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center bg-ivory/90 hover:bg-gold"><ChevronLeft size={18} /></button>
+              <button onClick={() => go(1)} aria-label="Next image" className="absolute right-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center bg-ivory/90 hover:bg-gold"><ChevronRight size={18} /></button>
+              <span className="absolute bottom-3 right-3 bg-charcoal/70 px-3 py-1 text-xs text-ivory">{i + 1} / {imgs.length}</span>
+            </div>
+            <ul className="mt-3 grid grid-cols-3 gap-3">
+              {imgs.map((m, n) => (
+                <li key={m.id + n}>
+                  <button onClick={() => setI(n)} aria-label={`Show photo ${n + 1}`} aria-current={n === i} className={`block w-full border-2 ${n === i ? 'border-gold' : 'border-transparent opacity-70 hover:opacity-100'}`}>
+                    <Img id={m.id} alt="" widths={[240, 480]} sizes="200px" className="aspect-[3/2]" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <p className="eyebrow mb-3 mt-12">{room.category === 'Suites' ? 'Suite' : room.category === 'Family' ? 'Family' : 'Room'}</p>
+            <h1 className="text-5xl">{room.name}</h1>
+            <p className="mt-2 font-serif text-xl italic text-gold-dark">{room.tagline}</p>
+            <p className="mt-6 leading-relaxed text-charcoal/75">{room.details}</p>
+
+            <ul className="mt-8 grid grid-cols-2 gap-4 border-y border-sand py-6 text-sm sm:grid-cols-4">
+              <li className="flex items-center gap-2"><Users size={18} className="text-gold-dark" /> Up to {room.maxGuests} guests</li>
+              <li className="flex items-center gap-2"><Maximize2 size={18} className="text-gold-dark" /> {room.size} m²</li>
+              <li className="flex items-center gap-2"><BedDouble size={18} className="text-gold-dark" /> {room.bed}</li>
+              <li className="flex items-center gap-2"><Eye size={18} className="text-gold-dark" /> {room.view}</li>
+            </ul>
+
+            <h2 className="mb-5 mt-10 text-3xl">Amenities</h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {room.amenities.map((a) => <li key={a} className="flex items-center gap-2 text-sm"><Check size={16} className="shrink-0 text-gold-dark" /> {a}</li>)}
+            </ul>
+
+            <h2 className="mb-5 mt-10 text-3xl">Check-in & Check-out</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[['Check-in', `From ${SITE.checkIn}`], ['Check-out', `By ${SITE.checkOut}`]].map(([k, v]) => (
+                <div key={k} className="flex items-center gap-3 border border-sand bg-white p-4"><Clock className="text-gold-dark" size={20} /><div><p className="text-[11px] uppercase tracking-[0.16em] text-charcoal/60">{k}</p><p className="font-serif text-xl">{v}</p></div></div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-charcoal/60">Example times for demonstration only.</p>
+          </div>
+
+          <aside className="lg:sticky lg:top-28 lg:self-start">
+            <form onSubmit={submit} noValidate aria-label={`Book ${room.name}`} className="border border-sand bg-white p-6 shadow-sm sm:p-8">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-charcoal/50">Example nightly rate · demo price</p>
+              <p className="mb-6 font-serif text-5xl">{formatMoney(room.price)} <span className="font-sans text-sm text-charcoal/60">/ night</span></p>
+              <div className="grid gap-4">
+                <Field label="Check-in" id="rd-in" error={errors.checkIn}>
+                  <input {...fieldProps('rd-in', errors.checkIn)} type="date" min={todayISO()} value={stay.checkIn} onChange={(e) => upd('checkIn', e.target.value)} className={cls(errors.checkIn)} />
+                </Field>
+                <Field label="Check-out" id="rd-out" error={errors.checkOut}>
+                  <input {...fieldProps('rd-out', errors.checkOut)} type="date" min={stay.checkIn ? addDays(stay.checkIn, 1) : todayISO()} value={stay.checkOut} onChange={(e) => upd('checkOut', e.target.value)} className={cls(errors.checkOut)} />
+                </Field>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Guests" id="rd-guests" error={errors.guests}>
+                    <select {...fieldProps('rd-guests', errors.guests)} value={stay.guests} onChange={(e) => upd('guests', Number(e.target.value))} className={cls(errors.guests)}>
+                      {Array.from({ length: 12 }, (_, n) => n + 1).map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Rooms" id="rd-rooms" error={errors.rooms}>
+                    <select {...fieldProps('rd-rooms', errors.rooms)} value={stay.rooms} onChange={(e) => upd('rooms', Number(e.target.value))} className={cls(errors.rooms)}>
+                      {Array.from({ length: 6 }, (_, n) => n + 1).map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </Field>
+                </div>
+              </div>
+              {av && (
+                <div className="mt-5 border-t border-sand pt-4 text-sm" aria-live="polite">
+                  <p className="text-charcoal/70">{av.label}</p>
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-charcoal/50">Estimated total · {nights} {nights === 1 ? 'night' : 'nights'}</p>
+                  <p className="font-serif text-3xl">{formatMoney(calcTotal(room, nights, stay.rooms))}</p>
+                </div>
+              )}
+              <Button type="submit" className="mt-5 w-full">Reserve (Demo)</Button>
+              <DemoNotice className="mt-4">Demo availability and price. No payment is taken.</DemoNotice>
+            </form>
+          </aside>
+        </div>
+
+        <section className="py-20" aria-labelledby="rec">
+          <h2 id="rec" className="mb-8 text-center text-4xl">You May Also Like</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{others.map((r, n) => <RoomCard key={r.id} room={r} index={n} />)}</div>
+        </section>
+      </div>
+      <Lightbox items={imgs} index={lb} onClose={() => setLb(null)} onIndex={setLb} />
+    </div>
+  );
+}
+
+export default function RoomDetails() {
+  const { slug } = useParams();
+  const room = getRoom(slug);
+  return room ? <Details key={slug} room={room} /> : <NotFound />;
+}
+Copy
+Copy// src/pages/Dining.jsx
+import { useState } from 'react';
+import { Clock } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import Img from '../components/Img';
+import Modal from '../components/Modal';
+import { Button, DemoNotice, Reveal } from '../components/ui';
+import { diningHours, diningImage, diningImage2, menu } from '../data/dining';
+import { IMG } from '../data/images';
+import { formatMoney } from '../utils/booking';
+import usePageMeta from '../hooks/usePageMeta';
+
+const MenuList = ({ items }) => (
+  <ul className="divide-y divide-sand">
+    {items.map((m) => (
+      <li key={m.name} className="flex items-baseline justify-between gap-6 py-4">
+        <div><p className="font-serif text-xl">{m.name}</p><p className="text-sm text-charcoal/65">{m.desc}</p></div>
+        <p className="font-serif text-xl text-gold-dark">{formatMoney(m.price)}</p>
+      </li>
+    ))}
+  </ul>
+);
+
+export default function Dining() {
+  usePageMeta('Restaurant & Dining', 'Explore the fictional Aurelia restaurant with a sample menu and example opening hours.');
+  const cats = Object.keys(menu);
+  const [tab, setTab] = useState(cats[0]);
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <PageHeader eyebrow="Restaurant & dining" title="An Evening to Savour" subtitle="Seasonal cooking, thoughtful wines and a room made for lingering." image={IMG.restaurant2} />
+      <section className="py-20 lg:py-28">
+        <div className="container-x grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+          <Reveal><Img id={diningImage} alt="Aurelia restaurant dining room" sizes="(min-width:1024px) 50vw, 100vw" className="aspect-[4/5]" /></Reveal>
+          <Reveal>
+            <p className="eyebrow mb-4">The restaurant</p>
+            <h2 className="text-4xl sm:text-5xl">Crafted with Season and Care</h2>
+            <p className="mt-6 leading-relaxed text-charcoal/75">Imagine candlelit tables, an open kitchen and plates built around the best of each season. From slow breakfasts to a multi-course tasting dinner, dining at Aurelia is designed to feel unhurried and personal.</p>
+            <DemoNotice className="mt-6">The menu, prices and opening hours on this page are fictional examples.</DemoNotice>
+            <div className="mt-8 border border-sand bg-white p-6">
+              <h3 className="mb-4 flex items-center gap-2 text-2xl"><Clock size={20} className="text-gold-dark" /> Example opening hours</h3>
+              <ul className="space-y-2 text-sm">{diningHours.map((h) => <li key={h.label} className="flex justify-between border-b border-sand/70 pb-2 last:border-0"><span>{h.label}</span><span className="text-charcoal/70">{h.time}</span></li>)}</ul>
+            </div>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Button onClick={() => setOpen(true)}>View Menu</Button>
+              <Button variant="outline" to="/contact">Ask About a Table</Button>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="bg-beige py-20 lg:py-28">
+        <div className="container-x grid gap-12 lg:grid-cols-[1fr_1.2fr] lg:gap-20">
+          <Img id={diningImage2} alt="Table set for dinner" sizes="(min-width:1024px) 40vw, 100vw" className="aspect-[4/3] lg:aspect-auto lg:min-h-[420px]" />
+          <div>
+            <p className="eyebrow mb-4">Sample menu</p>
+            <h2 className="mb-6 text-4xl">Menu Highlights</h2>
+            <div role="tablist" aria-label="Menu categories" className="mb-4 flex flex-wrap gap-2">
+              {cats.map((c) => (
+                <button key={c} role="tab" aria-selected={tab === c} onClick={() => setTab(c)}
+                  className={`border px-4 py-2 text-[11px] uppercase tracking-[0.16em] ${tab === c ? 'border-espresso bg-espresso text-ivory' : 'border-sand bg-white hover:border-gold'}`}>{c}</button>
+              ))}
+            </div>
+            <div role="tabpanel"><MenuList items={menu[tab]} /></div>
+          </div>
+        </div>
+      </section>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Sample menu" size="max-w-2xl">
+        <div className="p-6 sm:p-10">
+          <p className="eyebrow mb-2">Fictional menu</p>
+          <h2 className="mb-6 text-4xl">Aurelia Menu</h2>
+          {cats.map((c) => <div key={c} className="mb-8"><h3 className="mb-1 border-b border-gold pb-2 text-2xl">{c}</h3><MenuList items={menu[c]} /></div>)}
+          <p className="text-xs text-charcoal/60">Demonstration content. Items and prices are not real.</p>
+        </div>
+      </Modal>
+    </>
+  );
+}
+Copy
+Copy// src/pages/Experiences.jsx
+import PageHeader from '../components/PageHeader';
+import ExperienceGrid from '../components/ExperienceGrid';
+import Offers from '../components/Offers';
+import { IMG } from '../data/images';
+import usePageMeta from '../hooks/usePageMeta';
+
+export default function Experiences() {
+  usePageMeta('Experiences', 'Sample experiences at Aurelia: romantic getaways, spa days, fine dining and more.');
+  return (
+    <>
+      <PageHeader eyebrow="Experiences" title="Moments Worth Travelling For" subtitle="Curated sample experiences for every kind of stay." image={IMG.romantic} />
+      <ExperienceGrid />
+      <Offers />
+    </>
+  );
+}
+Copy// src/pages/GalleryPage.jsx
+import PageHeader from '../components/PageHeader';
+import Gallery from '../components/Gallery';
+import { IMG } from '../data/images';
+import usePageMeta from '../hooks/usePageMeta';
+
+export default function GalleryPage() {
+  usePageMeta('Gallery', 'Browse photos of the Aurelia hotel exterior, rooms, suites, pool, restaurant, spa and destination.');
+  return (
+    <>
+      <PageHeader eyebrow="Gallery" title="Inside Aurelia" subtitle="Rooms, pool, dining and the destination beyond." image={IMG.pool} />
+      <section className="py-16 lg:py-24"><div className="container-x"><Gallery /></div></section>
+    </>
+  );
+}
+Copy// src/pages/Contact.jsx
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown, Clock, Mail, MapPin, Phone } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import { Button, DemoNotice, Field, fieldProps } from '../components/ui';
+import { faqs } from '../data/faq';
+import { IMG } from '../data/images';
+import { SITE } from '../config';
+import { useToast } from '../context/ToastContext';
+import { isEmail, isPhone } from '../utils/validation';
+import usePageMeta from '../hooks/usePageMeta';
+
+function FAQ({ q, a }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-sand">
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center justify-between gap-4 py-5 text-left font-serif text-xl">
+        {q}<ChevronDown size={18} className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && <motion.p initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden pb-5 text-sm leading-relaxed text-charcoal/70">{a}</motion.p>}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export default function Contact() {
+  usePageMeta('Contact & Location', 'Contact the fictional Aurelia Hotel & Resort. Demo contact form, FAQs and check-in information.');
+  const { toast } = useToast();
+  const [f, setF] = useState({ name: '', email: '', phone: '', subject: 'General enquiry', message: '' });
+  const [errors, setErrors] = useState({});
+  const [sent, setSent] = useState(false);
+  const set = (k) => (e) => { setF({ ...f, [k]: e.target.value }); setErrors({ ...errors, [k]: undefined }); setSent(false); };
+  const cls = (e) => `input ${e ? 'input-error' : ''}`;
+
+  const submit = (e) => {
+    e.preventDefault();
+    const er = {};
+    if (f.name.trim().length < 2) er.name = 'Please enter your name.';
+    if (!isEmail(f.email)) er.email = 'Please enter a valid email address.';
+    if (f.phone && !isPhone(f.phone)) er.phone = 'Please enter a valid phone number or leave it blank.';
+    if (f.message.trim().length < 10) er.message = 'Please write at least 10 characters.';
+    setErrors(er);
+    if (Object.keys(er).length) return;
+    setSent(true);
+    setF({ name: '', email: '', phone: '', subject: 'General enquiry', message: '' });
+    toast('Demo form validated. Nothing was sent.', 'info');
+  };
+
+  return (
+    <>
+      <PageHeader eyebrow="Contact & location" title="We’d Love to Hear from You" subtitle="Send a message through the demo form below." image={IMG.lobby} />
+      <section className="py-20 lg:py-28">
+        <div className="container-x grid gap-14 lg:grid-cols-[1.2fr_1fr] lg:gap-20">
+          <form onSubmit={submit} noValidate aria-label="Contact form" className="grid gap-5">
+            <h2 className="text-4xl">Send a Message</h2>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Full name" id="c-name" error={errors.name}><input {...fieldProps('c-name', errors.name)} autoComplete="name" value={f.name} onChange={set('name')} className={cls(errors.name)} /></Field>
+              <Field label="Email" id="c-email" error={errors.email}><input {...fieldProps('c-email', errors.email)} type="email" autoComplete="email" value={f.email} onChange={set('email')} className={cls(errors.email)} /></Field>
+              <Field label="Phone (optional)" id="c-phone" error={errors.phone}><input {...fieldProps('c-phone', errors.phone)} type="tel" autoComplete="tel" value={f.phone} onChange={set('phone')} className={cls(errors.phone)} /></Field>
+              <Field label="Subject" id="c-subject">
+                <select id="c-subject" value={f.subject} onChange={set('subject')} className="input">
+                  {['General enquiry', 'Rooms & suites', 'Dining', 'Events & celebrations'].map((s) => <option key={s}>{s}</option>)}
+                </select>
+              </Field>
+            </div>
+            <Field label="Message" id="c-message" error={errors.message}><textarea {...fieldProps('c-message', errors.message)} rows={6} value={f.message} onChange={set('message')} className={cls(errors.message)} /></Field>
+            <div><Button type="submit">Send Message</Button></div>
+            {sent && <DemoNotice role="status">Demo success: your message passed validation, but no backend or email service is connected, so it was not sent to anyone.</DemoNotice>}
+          </form>
+
+          <div>
+            <h2 className="text-4xl">Find Us</h2>
+            <ul className="mt-6 space-y-4 text-sm">
+              <li className="flex gap-3"><MapPin size={18} className="mt-0.5 shrink-0 text-gold-dark" /> {SITE.address.join(', ')} <span className="text-charcoal/50">(placeholder)</span></li>
+              <li className="flex gap-3"><Phone size={18} className="shrink-0 text-gold-dark" /> {SITE.phone} <span className="text-charcoal/50">(placeholder)</span></li>
+              <li className="flex gap-3"><Mail size={18} className="shrink-0 text-gold-dark" /> {SITE.email} <span className="text-charcoal/50">(placeholder)</span></li>
+              <li className="flex gap-3"><Clock size={18} className="shrink-0 text-gold-dark" /> Check-in from {SITE.checkIn} · Check-out by {SITE.checkOut}</li>
+            </ul>
+            <div className="mt-8 aspect-[4/3] overflow-hidden border border-sand bg-beige">
+              {SITE.mapEmbedUrl ? (
+                <iframe title="Hotel location map" src={SITE.mapEmbedUrl} loading="lazy" className="h-full w-full border-0" referrerPolicy="no-referrer-when-downgrade" />
+              ) : (
+                <div className="grid h-full place-items-center p-6 text-center">
+                  <div><MapPin className="mx-auto mb-3 text-gold-dark" size={32} /><p className="font-serif text-2xl">Map placeholder</p><p className="mt-1 text-xs text-charcoal/60">Set <code>mapEmbedUrl</code> in <code>src/config.js</code> to show a real map.</p></div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+      <section className="bg-beige py-20">
+        <div className="container-x max-w-3xl">
+          <h2 className="mb-8 text-center text-4xl">Frequently Asked Questions</h2>
+          <div className="border-t border-sand">{faqs.map((x) => <FAQ key={x.q} {...x} />)}</div>
+        </div>
+      </section>
+    </>
+  );
+}
+Copy
+Copy// src/pages/Book.jsx
+import { useNavigate } from 'react-router-dom';
+import BookingFlow from '../components/BookingFlow';
+import usePageMeta from '../hooks/usePageMeta';
+
+export default function Book() {
+  usePageMeta('Book a Room (Demo)', 'Walk through the Aurelia demo booking flow.');
+  const navigate = useNavigate();
+  return (
+    <section className="bg-beige pb-20 pt-28">
+      <div className="container-x max-w-3xl">
+        <div className="bg-ivory shadow-sm"><BookingFlow onComplete={(ref) => navigate(`/booking/${ref}`)} /></div>
+      </div>
+    </section>
+  );
+}
+Copy// src/pages/BookingConfirmation.jsx
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { CheckCircle2, Printer, Search, Trash2 } from 'lucide-react';
+import Img from '../components/Img';
+import { Button, DemoNotice, Field, fieldProps } from '../components/ui';
+import { SITE } from '../config';
+import { useBooking } from '../context/BookingContext';
+import { useToast } from '../context/ToastContext';
+import { deleteBooking, formatDate, formatMoney, getBookingByRef, getBookings } from '../utils/booking';
+import usePageMeta from '../hooks/usePageMeta';
+
+export default function BookingConfirmation() {
+  usePageMeta('Demo Booking Confirmation');
+  const { ref } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { openBooking } = useBooking();
+  const [lookup, setLookup] = useState('');
+  const [err, setErr] = useState('');
+  const booking = ref ? getBookingByRef(ref) : null;
+
+  const find = (e) => {
+    e.preventDefault();
+    if (!getBookingByRef(lookup)) return setErr('No demo booking with that reference was found in this browser.');
+    navigate(`/booking/${lookup.trim()}`);
+  };
+
+  if (!booking) {
+    const list = ref ? [] : getBookings();
+    return (
+      <section className="min-h-[70vh] bg-beige pb-20 pt-32">
+        <div className="container-x max-w-2xl">
+          <h1 className="text-5xl">{ref ? 'Booking not found' : 'My Demo Bookings'}</h1>
+          <p className="mt-3 text-charcoal/70">{ref ? `We couldn’t find reference “${ref}” in this browser’s LocalStorage.` : 'Demo bookings are stored only in this browser.'}</p>
+          <form onSubmit={find} noValidate className="mt-8 flex items-start gap-3">
+            <Field label="Booking reference" id="lookup" error={err} className="flex-1">
+              <input {...fieldProps('lookup', err)} value={lookup} onChange={(e) => { setLookup(e.target.value); setErr(''); }} placeholder="AUR-DEMO-XXXXXXXX" className="input" />
+            </Field>
+            <Button type="submit" className="mt-[26px]"><Search size={15} /> Find</Button>
+          </form>
+          {list.length > 0 && (
+            <ul className="mt-10 space-y-3">
+              {list.map((b) => (
+                <li key={b.ref}><Link to={`/booking/${b.ref}`} className="flex items-center justify-between border border-sand bg-white p-4 hover:border-gold">
+                  <span><span className="block font-serif text-xl">{b.roomName}</span><span className="text-xs text-charcoal/60">{b.ref} · {formatDate(b.checkIn)}</span></span>
+                  <span className="font-serif text-xl">{formatMoney(b.total)}</span>
+                </Link></li>
+              ))}
+            </ul>
+          )}
+          {!ref && list.length === 0 && <p className="mt-10 border border-dashed border-sand bg-white p-8 text-center text-charcoal/60">No saved demo bookings yet.</p>}
+          <div className="mt-10"><Button onClick={() => openBooking()}>Start a Demo Booking</Button></div>
+        </div>
+      </section>
+    );
+  }
+
+  const b = booking;
+  const remove = () => {
+    deleteBooking(b.ref);
+    toast('Demo booking removed from this browser.', 'info');
+    navigate('/booking');
+  };
+  const rows = [
+    ['Reference', b.ref], ['Room', `${b.roomName} × ${b.rooms}`],
+    ['Check-in', `${formatDate(b.checkIn)} · from ${SITE.checkIn}`], ['Check-out', `${formatDate(b.checkOut)} · by ${SITE.checkOut}`],
+    ['Nights', b.nights], ['Guests', b.guests], ['Guest', `${b.guest.name} · ${b.guest.email} · ${b.guest.phone}`],
+  ];
+  return (
+    <section className="bg-beige pb-20 pt-32">
+      <div className="container-x max-w-3xl">
+        <div className="text-center">
+          <CheckCircle2 className="mx-auto text-gold-dark" size={48} strokeWidth={1.3} />
+          <p className="eyebrow mb-3 mt-4">Demo reservation confirmed</p>
+          <h1 className="text-5xl">Thank You, {b.guest.name.split(' ')[0]}</h1>
+          <p className="mt-3 text-charcoal/70">Your demo booking reference is</p>
+          <p className="mt-1 font-serif text-4xl tracking-wider text-gold-dark">{b.ref}</p>
+        </div>
+        <div className="mt-10 border border-sand bg-white">
+          <Img id={b.roomImage} alt={b.roomName} sizes="768px" className="aspect-[16/7]" />
+          <dl className="divide-y divide-sand text-sm">
+            {rows.map(([k, v]) => <div key={k} className="grid gap-1 px-5 py-3 sm:grid-cols-[140px_1fr]"><dt className="text-charcoal/60">{k}</dt><dd>{v}</dd></div>)}
+            <div className="grid gap-1 bg-beige px-5 py-4 sm:grid-cols-[140px_1fr]">
+              <dt className="text-charcoal/60">Estimated total</dt>
+              <dd><span className="font-serif text-3xl">{formatMoney(b.total)}</span><span className="ml-2 text-xs text-charcoal/60">{formatMoney(b.pricePerNight)} × {b.nights} nights × {b.rooms} rooms</span></dd>
+            </div>
+          </dl>
+        </div>
+        <DemoNotice className="mt-6">This is a demo reservation, not a confirmed real-world hotel booking. No payment was taken, no room is held, and no confirmation email was sent. It is saved only in this browser’s LocalStorage.</DemoNotice>
+        <div className="mt-8 flex flex-wrap justify-center gap-3 print:hidden">
+          <Button variant="dark" onClick={() => window.print()}><Printer size={15} /> Print</Button>
+          <Button variant="outline" to="/booking">All Demo Bookings</Button>
+          <Button variant="outline" onClick={remove}><Trash2 size={15} /> Remove</Button>
+          <Button to="/">Back Home</Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+Copy
+Copy// src/pages/Legal.jsx
+import PageHeader from '../components/PageHeader';
+import { DemoNotice } from '../components/ui';
+import { IMG } from '../data/images';
+import usePageMeta from '../hooks/usePageMeta';
+
+const content = {
+  privacy: {
+    title: 'Privacy Policy',
+    body: [
+      ['Demonstration site', 'Aurelia is a fictional demonstration website. It has no backend and does not transmit personal data to any server.'],
+      ['LocalStorage', 'Demo bookings (name, email, phone, stay details) are stored only in your own browser so you can revisit a confirmation. Use the Remove button on a booking, or clear your browser data, to delete them.'],
+      ['Forms', 'The contact and newsletter forms validate input but do not send, store or share anything.'],
+      ['Production use', 'Before launching a real hotel site, replace this text with a legally reviewed policy.'],
+    ],
+  },
+  terms: {
+    title: 'Terms of Use',
+    body: [
+      ['Demonstration only', 'Rooms, prices, offers, menus, hours and reviews are fictional. Nothing on this site constitutes a real offer or booking.'],
+      ['No payments', 'No payments are processed and no card details are collected.'],
+      ['Images', 'Photographs are loaded from Unsplash and remain the property of their creators under the Unsplash licence.'],
+      ['Production use', 'Replace these terms with legally reviewed terms before real-world use.'],
+    ],
+  },
+};
+
+export default function Legal({ type }) {
+  const c = content[type];
+  usePageMeta(c.title);
+  return (
+    <>
+      <PageHeader eyebrow="Legal" title={c.title} image={IMG.lobby2} />
+      <section className="py-16"><div className="container-x max-w-3xl">
+        <DemoNotice className="mb-10">Placeholder text for a demonstration website, not legal advice.</DemoNotice>
+        {c.body.map(([h, p]) => <div key={h} className="mb-8"><h2 className="text-3xl">{h}</h2><p className="mt-2 leading-relaxed text-charcoal/75">{p}</p></div>)}
+      </div></section>
+    </>
+  );
+}
+Copy
+Copy// src/pages/NotFound.jsx
+import { Button } from '../components/ui';
+import usePageMeta from '../hooks/usePageMeta';
+
+export default function NotFound() {
+  usePageMeta('Page Not Found');
+  return (
+    <section className="grid min-h-[80vh] place-items-center bg-espresso px-6 pt-24 text-center text-ivory">
+      <div>
+        <p className="font-serif text-8xl text-gold sm:text-9xl">404</p>
+        <h1 className="mt-4 text-4xl sm:text-5xl">This Page Has Checked Out</h1>
+        <p className="mx-auto mt-4 max-w-md text-ivory/70">The page you are looking for doesn’t exist or has moved. Let us guide you back.</p>
+        <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <Button to="/">Return Home</Button>
+          <Button variant="light" to="/rooms">View Rooms</Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+Copy// src/pages/NotFound.jsx is the last file. Optional: add Gallery.jsx / Experiences exports as needed.
