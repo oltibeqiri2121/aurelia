@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, UserRound, X } from 'lucide-react';
 import { Button } from './ui';
@@ -20,8 +20,14 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { openBooking } = useBooking();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
+
+  const handleSignOut = () => {
+    signOut();
+    navigate('/');
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -59,13 +65,25 @@ export default function Navbar() {
             {links.map((l) => <NavLink key={l.to} to={l.to} end={l.to === '/'} className={linkCls}>{l.label}</NavLink>)}
           </nav>
           <div className="flex items-center gap-3">
-            {isAdmin ? (
-              <Link to="/admin" className={`hidden items-center gap-2 text-[12px] font-medium uppercase tracking-[0.16em] lg:flex ${light ? 'text-ivory' : 'text-charcoal'}`}>
-                <UserRound size={16} /> Admin
-              </Link>
+            {user ? (
+              <div className="hidden items-center gap-4 lg:flex">
+                {!isAdmin && (
+                  <Link to="/booking" className={`flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.16em] ${light ? 'text-ivory' : 'text-charcoal'}`}>
+                    <UserRound size={16} /> Account
+                  </Link>
+                )}
+                {isAdmin && (
+                  <Link to="/admin" className={`flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.16em] ${light ? 'text-ivory' : 'text-charcoal'}`}>
+                    <UserRound size={16} /> Admin
+                  </Link>
+                )}
+                <button type="button" onClick={handleSignOut} className={`text-[12px] font-medium uppercase tracking-[0.16em] hover:text-gold ${light ? 'text-ivory' : 'text-charcoal'}`}>
+                  Sign Out
+                </button>
+              </div>
             ) : (
-              <Link to={user ? '/booking' : '/signin'} className={`hidden items-center gap-2 text-[12px] font-medium uppercase tracking-[0.16em] lg:flex ${light ? 'text-ivory' : 'text-charcoal'}`}>
-                <UserRound size={16} /> {user ? 'Account' : 'Sign In'}
+              <Link to="/signin" className={`hidden items-center gap-2 text-[12px] font-medium uppercase tracking-[0.16em] lg:flex ${light ? 'text-ivory' : 'text-charcoal'}`}>
+                <UserRound size={16} /> Sign In
               </Link>
             )}
             <Button onClick={() => openBooking()} className="hidden !px-6 !py-3 sm:inline-flex">Book a Room</Button>
@@ -87,9 +105,17 @@ export default function Navbar() {
                   <NavLink to={l.to} end={l.to === '/'} className={({ isActive }) => `block border-b border-white/10 py-4 font-serif text-3xl ${isActive ? 'text-gold' : ''}`}>{l.label}</NavLink>
                 </motion.div>
               ))}
-              <Link to={isAdmin ? '/admin' : '/signin'} className="mt-6 flex items-center gap-3 border-t border-white/10 py-4 text-lg uppercase tracking-[0.16em] text-gold">
-                <UserRound size={18} /> {isAdmin ? 'Admin Dashboard' : user ? 'My Account' : 'Sign In'}
-              </Link>
+              {user ? (
+                <div className="mt-6 border-t border-white/10">
+                  {!isAdmin && <Link to="/booking" className="flex items-center gap-3 py-4 text-lg uppercase tracking-[0.16em] text-gold"><UserRound size={18} /> My Account</Link>}
+                  {isAdmin && <Link to="/admin" className="flex items-center gap-3 py-4 text-lg uppercase tracking-[0.16em] text-gold"><UserRound size={18} /> Admin Dashboard</Link>}
+                  <button type="button" onClick={() => { setOpen(false); handleSignOut(); }} className="border-t border-white/10 py-4 text-lg uppercase tracking-[0.16em] text-ivory">Sign Out</button>
+                </div>
+              ) : (
+                <Link to="/signin" className="mt-6 flex items-center gap-3 border-t border-white/10 py-4 text-lg uppercase tracking-[0.16em] text-gold">
+                  <UserRound size={18} /> Sign In
+                </Link>
+              )}
               <Button onClick={() => { setOpen(false); openBooking(); }} className="mt-8">Book a Room</Button>
             </nav>
           </motion.div>

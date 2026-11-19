@@ -13,7 +13,7 @@ const Ctx = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(readSession);
 
-  const signIn = useCallback((email, password) => {
+  const signIn = useCallback((email, password, suppliedName = '') => {
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !password) return { ok: false, error: 'Please enter your email and password.' };
     if (cleanEmail === ADMIN_EMAIL) {
@@ -24,7 +24,8 @@ export function AuthProvider({ children }) {
       return { ok: true, user: admin };
     }
     if (password.length < 6) return { ok: false, error: 'Password must be at least 6 characters.' };
-    const guest = { name: cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()), email: cleanEmail, role: 'guest' };
+    const fallbackName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    const guest = { name: suppliedName || fallbackName, email: cleanEmail, role: 'guest' };
     localStorage.setItem(SESSION_KEY, JSON.stringify(guest));
     setUser(guest);
     return { ok: true, user: guest };

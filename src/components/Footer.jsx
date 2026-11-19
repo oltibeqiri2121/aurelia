@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Facebook, Instagram, Mail, MapPin, Phone, Twitter, Youtube } from 'lucide-react';
 import { Button } from './ui';
 import { SITE } from '../config';
@@ -18,7 +18,8 @@ const socials = [
 export default function Footer() {
   const { toast } = useToast();
   const { openBooking } = useBooking();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
@@ -30,6 +31,10 @@ export default function Footer() {
     toast('Demo only: no mailing list is connected, so nothing was subscribed.', 'info');
   };
   const col = 'text-sm text-ivory/70 transition-colors hover:text-gold';
+  const handleSignOut = () => {
+    signOut();
+    navigate('/');
+  };
 
   return (
     <footer className="bg-charcoal text-ivory">
@@ -52,9 +57,10 @@ export default function Footer() {
         <nav aria-label="Footer navigation">
           <h3 className="mb-5 text-xl text-gold">Explore</h3>
           <ul className="space-y-3">
-            {[['/', 'Home'], ['/rooms', 'Rooms & Suites'], ['/dining', 'Dining'], ['/experiences', 'Experiences'], ['/gallery', 'Gallery'], ['/contact', 'Contact'], ['/booking', 'My Demo Booking'], [isAdmin ? '/admin' : '/signin', isAdmin ? 'Admin Dashboard' : user ? 'My Account' : 'Sign In']].map(([to, l]) => (
+            {[['/', 'Home'], ['/rooms', 'Rooms & Suites'], ['/dining', 'Dining'], ['/experiences', 'Experiences'], ['/gallery', 'Gallery'], ['/contact', 'Contact'], ['/booking', 'My Demo Booking'], ...(!user ? [['/signin', 'Sign In']] : !isAdmin ? [['/booking', 'My Account']] : [])].map(([to, l]) => (
               <li key={to}><Link to={to} className={col}>{l}</Link></li>
             ))}
+            {user && <li><button type="button" onClick={handleSignOut} className={col}>Sign Out</button></li>}
           </ul>
         </nav>
 
