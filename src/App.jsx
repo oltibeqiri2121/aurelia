@@ -8,6 +8,7 @@ import Footer from './components/Footer';
 import BookingModal from './components/BookingModal';
 import ScrollToTop from './components/ScrollToTop';
 import { Spinner } from './components/ui';
+import { AuthProvider } from './context/AuthContext';
 
 const Home = lazy(() => import('./pages/Home'));
 const Rooms = lazy(() => import('./pages/Rooms'));
@@ -20,6 +21,8 @@ const Book = lazy(() => import('./pages/Book'));
 const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'));
 const Legal = lazy(() => import('./pages/Legal'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const SignIn = lazy(() => import('./pages/SignIn'));
+const Admin = lazy(() => import('./pages/Admin'));
 
 function Layout() {
   const { pathname } = useLocation();
@@ -44,6 +47,9 @@ function Layout() {
             <Route path="/booking/:ref" element={<BookingConfirmation />} />
             <Route path="/privacy" element={<Legal type="privacy" />} />
             <Route path="/terms" element={<Legal type="terms" />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/login" element={<SignIn />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -58,12 +64,14 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <ToastProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <BookingProvider>
-            <ScrollToTop />
-            <Layout />
-          </BookingProvider>
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <BookingProvider>
+              <ScrollToTop />
+              <Layout />
+            </BookingProvider>
+          </BrowserRouter>
+        </AuthProvider>
       </ToastProvider>
     </MotionConfig>
   );

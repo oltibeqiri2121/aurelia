@@ -67,10 +67,17 @@ export function getBookingByRef(ref) {
   return getBookings().find((b) => b.ref.toLowerCase() === String(ref).trim().toLowerCase()) || null;
 }
 export function saveBooking(booking) {
-  try { localStorage.setItem(KEY, JSON.stringify([booking, ...getBookings()])); return true; } catch { return false; }
+  try { localStorage.setItem(KEY, JSON.stringify([{ ...booking, status: 'pending' }, ...getBookings()])); return true; } catch { return false; }
 }
 export function deleteBooking(ref) {
   try { localStorage.setItem(KEY, JSON.stringify(getBookings().filter((b) => b.ref !== ref))); } catch { /* ignore */ }
+}
+export function updateBookingStatus(ref, status) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(getBookings().map((booking) =>
+      booking.ref === ref ? { ...booking, status } : booking
+    )));
+  } catch { /* ignore */ }
 }
 export function generateReference() {
   const existing = new Set(getBookings().map((b) => b.ref));

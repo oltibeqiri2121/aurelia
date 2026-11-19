@@ -5,6 +5,7 @@ import { Button } from './ui';
 import { SITE } from '../config';
 import { useToast } from '../context/ToastContext';
 import { useBooking } from '../context/BookingContext';
+import { useAuth } from '../context/AuthContext';
 import { isEmail } from '../utils/validation';
 
 const socials = [
@@ -17,6 +18,7 @@ const socials = [
 export default function Footer() {
   const { toast } = useToast();
   const { openBooking } = useBooking();
+  const { user, isAdmin } = useAuth();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
@@ -50,7 +52,7 @@ export default function Footer() {
         <nav aria-label="Footer navigation">
           <h3 className="mb-5 text-xl text-gold">Explore</h3>
           <ul className="space-y-3">
-            {[['/', 'Home'], ['/rooms', 'Rooms & Suites'], ['/dining', 'Dining'], ['/experiences', 'Experiences'], ['/gallery', 'Gallery'], ['/contact', 'Contact'], ['/booking', 'My Demo Booking']].map(([to, l]) => (
+            {[['/', 'Home'], ['/rooms', 'Rooms & Suites'], ['/dining', 'Dining'], ['/experiences', 'Experiences'], ['/gallery', 'Gallery'], ['/contact', 'Contact'], ['/booking', 'My Demo Booking'], [isAdmin ? '/admin' : '/signin', isAdmin ? 'Admin Dashboard' : user ? 'My Account' : 'Sign In']].map(([to, l]) => (
               <li key={to}><Link to={to} className={col}>{l}</Link></li>
             ))}
           </ul>

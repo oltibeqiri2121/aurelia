@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, UserRound, X } from 'lucide-react';
 import { Button } from './ui';
 import { useBooking } from '../context/BookingContext';
+import { useAuth } from '../context/AuthContext';
 
 const links = [
   { to: '/', label: 'Home' },
@@ -20,6 +21,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
   const { openBooking } = useBooking();
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -57,6 +59,15 @@ export default function Navbar() {
             {links.map((l) => <NavLink key={l.to} to={l.to} end={l.to === '/'} className={linkCls}>{l.label}</NavLink>)}
           </nav>
           <div className="flex items-center gap-3">
+            {isAdmin ? (
+              <Link to="/admin" className={`hidden items-center gap-2 text-[12px] font-medium uppercase tracking-[0.16em] lg:flex ${light ? 'text-ivory' : 'text-charcoal'}`}>
+                <UserRound size={16} /> Admin
+              </Link>
+            ) : (
+              <Link to={user ? '/booking' : '/signin'} className={`hidden items-center gap-2 text-[12px] font-medium uppercase tracking-[0.16em] lg:flex ${light ? 'text-ivory' : 'text-charcoal'}`}>
+                <UserRound size={16} /> {user ? 'Account' : 'Sign In'}
+              </Link>
+            )}
             <Button onClick={() => openBooking()} className="hidden !px-6 !py-3 sm:inline-flex">Book a Room</Button>
             <button className={`grid h-11 w-11 place-items-center lg:hidden ${light ? 'text-ivory' : 'text-charcoal'}`}
               aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="mobile-menu" onClick={() => setOpen((o) => !o)}>
@@ -76,6 +87,9 @@ export default function Navbar() {
                   <NavLink to={l.to} end={l.to === '/'} className={({ isActive }) => `block border-b border-white/10 py-4 font-serif text-3xl ${isActive ? 'text-gold' : ''}`}>{l.label}</NavLink>
                 </motion.div>
               ))}
+              <Link to={isAdmin ? '/admin' : '/signin'} className="mt-6 flex items-center gap-3 border-t border-white/10 py-4 text-lg uppercase tracking-[0.16em] text-gold">
+                <UserRound size={18} /> {isAdmin ? 'Admin Dashboard' : user ? 'My Account' : 'Sign In'}
+              </Link>
               <Button onClick={() => { setOpen(false); openBooking(); }} className="mt-8">Book a Room</Button>
             </nav>
           </motion.div>

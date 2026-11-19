@@ -19,7 +19,7 @@ export default function About() {
           <motion.div initial={{ clipPath: 'inset(0 100% 0 0)' }} whileInView={{ clipPath: 'inset(0 0% 0 0)' }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: 1.3, ease: [0.76, 0, 0.24, 1] }} className="relative overflow-hidden rounded-[1.5rem] shadow-[0_25px_60px_rgba(26,22,18,0.10)]">
             <img src={aboutHotelNight} alt="The Aurelia hotel façade and terrace at night" className="aspect-[4/5] w-full object-cover" />
           </motion.div>
-          {/* <span aria-hidden="true" className="absolute -bottom-5 -right-5 -z-10 hidden h-3/4 w-3/4 border border-gold sm:block" /> */}
+          <span aria-hidden="true" className="absolute -bottom-5 -right-5 -z-10 hidden h-3/4 w-3/4 border border-gold sm:block" />
         </div>
         <Reveal>
           <p className="eyebrow mb-4">About our hotel</p>
